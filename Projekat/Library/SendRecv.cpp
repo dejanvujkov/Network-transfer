@@ -1,5 +1,4 @@
 #include "header.h"
-#include "Algoritam.h"
 #include <stdlib.h>
 
 int Send(char* data, int len, SOCKET* socket, LPSOCKADDR* serveraddress, int addrLen)
@@ -71,7 +70,7 @@ int Send(char* data, int len, SOCKET* socket, LPSOCKADDR* serveraddress, int add
 
 		/** SLIDER **/
 		h->slider = h->slider + h->recv;
-
+     
 	}
 	// while end
 
