@@ -134,7 +134,12 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Algoritam.h" />
     <ClInclude Include="header.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Algoritam.cpp" />
+    <ClCompile Include="SendRecv.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
