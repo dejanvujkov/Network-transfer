@@ -1,32 +1,103 @@
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+
 #include "header.h"
 #include <stdlib.h>
+#include <stdio.h>
 
-int Send(char* data, int len, SOCKET* socket, LPSOCKADDR* serveraddress, int addrLen)
+int Send(rSocket sock, char* data, int len)
 {
 	/** INICIJALIZACIJA **/
-	SendRecvHelper* h;
-	h = (SendRecvHelper*)malloc(sizeof(SendRecvHelper));
-
-	h->data = data;
-	h->datalen = len;
+	rHelper* h;
+	h = (rHelper*)malloc(sizeof(rHelper));
 	h->slider = 0;
-
-	h->clientsocket = socket;
-	h->address = serveraddress;
-	h->addresslength = addrLen;
+	h->state = DISCONECTED;
 
 	h->cwnd = 10;			// Inicijalno 10
 	h->ssthresh = 0;
 	h->recv = 1000;			// Inicijalno mora biti veci od cwnd
 	h->slowstart = true;
+	
+
+
+	int sockAddrLen = sizeof(struct sockaddr);
+
+	// INIT Client
+	sockaddr_in serverAddress;
+	memset((char*)&serverAddress, 0, sizeof(serverAddress));
+	serverAddress.sin_family = AF_INET;
+	serverAddress.sin_addr.s_addr = inet_addr(sock.addr);
+	serverAddress.sin_port = htons((u_short)sock.port);
+
+	SOCKET clientSocket = socket(AF_INET,      // IPv4 address famly
+		SOCK_DGRAM,   // datagram socket
+		IPPROTO_UDP); // UDP
+	// INIT Client
+
+	// INIT Server
+	sockaddr_in localServerAddress;
+	memset((char*)&localServerAddress, 0, sizeof(localServerAddress));
+	localServerAddress.sin_family = AF_INET; /*set server address protocol family*/
+	localServerAddress.sin_addr.s_addr = INADDR_ANY;
+	localServerAddress.sin_port = htons(sock.port + 1);
+
+	SOCKET serverSocket = socket(AF_INET,      // IPv4 address famly
+		SOCK_DGRAM,   // datagram socket
+		IPPROTO_UDP); // UDP
+	
+	bind(serverSocket, (LPSOCKADDR)&localServerAddress, sizeof(localServerAddress));
+	// INIT Server
+	
+
+	int iResult = 0;
+
+	for (int i = 0; i < 4; i++)
+		printf("  %x  ", ((char*)&len)[i]);
+	
+	/** CONNECT **/
+	iResult = sendto(
+		clientSocket,
+		(char*)&len,
+		4,
+		0,
+		(LPSOCKADDR)&serverAddress,
+		sockAddrLen);
+
+
+
+	char* buffer;
+	buffer = (char*)malloc(100);
+
+	iResult = recvfrom(serverSocket,
+		buffer,
+		4,
+		0,
+		(LPSOCKADDR)&localServerAddress,
+		&sockAddrLen);
+
+	for (int i = 0; i < 4; i++)
+		printf("  %x  ", buffer[i]);
+
 
 	// while start, (slider < datalen)
-	while (h->slider < h->datalen)
+	while (h->slider < len)
 	{
 		/** SEND **/
 		// dejina funkcija SEND
-		//UDPSend(h->data + h->slider, h->cwnd, h->clientsocket, h->address, h->addresslength);
+		iResult = sendto(
+			clientSocket,
+			data + h->slider,
+			h->cwnd,
+			0,
+			(LPSOCKADDR)&serverAddress,
+			sizeof(struct sockaddr));
 
+		if (iResult == SOCKET_ERROR)
+		{
+			printf("sendto failed with error: %d\n", WSAGetLastError());
+			closesocket(clientSocket);
+			WSACleanup();
+			return 1;
+		}
 
 		/** RECV **/
 		// dejina funkcija RECV
@@ -74,8 +145,9 @@ int Send(char* data, int len, SOCKET* socket, LPSOCKADDR* serveraddress, int add
 	}
 	// while end
 
+	
+
 	free(h);
-	//UDPCleanup();
 
 	return 0;
 }
