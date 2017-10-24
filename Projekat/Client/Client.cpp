@@ -4,8 +4,8 @@
 int main(int argc, char* argv[])
 {
 	char* buffer;
-	buffer = (char*)malloc(100);
-	memset(buffer, 77, 100);
+	buffer = (char*)malloc(10000);
+	memset(buffer, 77, 10000);
 
 	WSADATA wsaData;
 	int iResult = 0;
@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
 	socket.addr = SERVER_IP_ADDERESS;
 	socket.port = SERVER_PORT;
 
-	Send(socket, buffer, 100);
+	Send(socket, buffer, 10000);
 
 	iResult = WSACleanup();
 	if (iResult == SOCKET_ERROR)
