@@ -1,7 +1,9 @@
 #pragma once
 
 enum rConnectionState {
-	CONNECTED = 10,
+	REQUEST = 10,
 	ACCEPTED,
+	REJECTED,
+	CONNECTED,
 	DISCONNECTED
 };

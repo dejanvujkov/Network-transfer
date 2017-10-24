@@ -51,7 +51,7 @@ int Send(rSocket sock, char* data, int len)
 	serverAddress.sin_addr.s_addr = inet_addr(sock.addr);
 	serverAddress.sin_port = htons((u_short)sock.port);
 	
-	int clientBuffer = CONNECTED;
+	int clientBuffer = REQUEST;
 	/** INIT Client **/
 
 	/** CONNECT **/
@@ -115,8 +115,6 @@ int Send(rSocket sock, char* data, int len)
 	//unlock h
 
 	// t1
-
-
 
 	//thread2 petlja koja uzima iz buffer i salje preko mreze
 

@@ -91,7 +91,7 @@ int main(int argc, char* argv[])
 			printf("  %x  ", accessBuffer[i]);
 
 
-		if (*poruka == CONNECTED) {
+		if (*poruka == REQUEST) {
 
 			//sendto "Accepted" Clinet
 			*poruka = ACCEPTED;
@@ -110,7 +110,7 @@ int main(int argc, char* argv[])
 			}
 
 
-			printf("Server poslao Accepted");
+			printf("Server poslao Accepted\n");
 		}
 		
 		// possible message processing logic could be placed here
