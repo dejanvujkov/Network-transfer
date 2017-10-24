@@ -27,9 +27,15 @@
     <ClInclude Include="enums.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="KruzniBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SendRecv.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="KruzniBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

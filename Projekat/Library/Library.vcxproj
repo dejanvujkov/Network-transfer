@@ -136,9 +136,11 @@
   <ItemGroup>
     <ClInclude Include="enums.h" />
     <ClInclude Include="header.h" />
+    <ClInclude Include="KruzniBuffer.h" />
     <ClInclude Include="structs.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="KruzniBuffer.cpp" />
     <ClCompile Include="SendRecv.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

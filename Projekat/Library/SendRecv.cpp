@@ -1,4 +1,5 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
+#define MAX_BUFFER_SIZE 10 * 1024 * 1024
 
 #include "header.h"
 #include <stdlib.h>
@@ -9,19 +10,31 @@ int Send(rSocket sock, char* data, int len)
 	/** INICIJALIZACIJA **/
 	rHelper* h;
 	h = (rHelper*)malloc(sizeof(rHelper));
-	h->slider = 0;
+	h->slider = 0;			// Broj bajtova prebacenih u buffer
 	h->state = DISCONECTED;
 
 	h->cwnd = 10;			// Inicijalno 10
 	h->ssthresh = 0;
 	h->recv = 1000;			// Inicijalno mora biti veci od cwnd
 	h->slowstart = true;
+
+	Kruzni_Buffer buffer;
+	if (len < MAX_BUFFER_SIZE)
+	{
+		rInitBuffer(&buffer, len);
+		rPush(&buffer, data, len);
+	}
+	else
+	{
+		rInitBuffer(&buffer, MAX_BUFFER_SIZE);
+		rPush(&buffer, data, MAX_BUFFER_SIZE);
+	}
 	/** INICIJALIZACIJA **/
 
 
 	/** INIT Client **/
 	int sockAddrLen = sizeof(struct sockaddr);
-	
+
 	sockaddr_in serverAddress;
 	memset((char*)&serverAddress, 0, sizeof(serverAddress));
 	serverAddress.sin_family = AF_INET;
@@ -41,6 +54,21 @@ int Send(rSocket sock, char* data, int len)
 
 	int iResult = 0;
 
+	//thread1 petlja koja uzima iz data i stavlja u buffer
+	while (len - h->slider /*!= 0*/)
+	{
+		if (buffer.free > 0)
+		{
+			if ((len - h->slider) < buffer.free)
+				rPush(&buffer, data + h->slider, len - h->slider);
+			else
+				rPush(&buffer, data + h->slider, buffer.free);
+		}
+		Sleep(100);
+	}
+	// t1
+
+	//thread2 petlja koja uzima iz buffer i salje preko mreze
 
 	// while start, (slider < datalen)
 	while (h->slider < len)
@@ -105,11 +133,11 @@ int Send(rSocket sock, char* data, int len)
 
 		/** SLIDER **/
 		h->slider = h->slider + h->recv;
-     
+
 	}
 	// while end
 
-	
+
 
 	free(h);
 
