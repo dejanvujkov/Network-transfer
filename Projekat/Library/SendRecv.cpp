@@ -18,6 +18,18 @@ int Send(rSocket sock, char* data, int len)
 	h->ssthresh = 0;
 	h->recv = 1000;			// Inicijalno mora biti veci od cwnd
 	h->slowstart = true;
+
+	Kruzni_Buffer buffer;
+	if (len < MAX_BUFFER_SIZE)
+	{
+		rInitBuffer(&buffer, len);
+		rPush(&buffer, data, len);
+	}
+	else
+	{
+		rInitBuffer(&buffer, MAX_BUFFER_SIZE);
+		rPush(&buffer, data, MAX_BUFFER_SIZE);
+	}
 	/** INICIJALIZACIJA **/
 
 	int iResult = 0;
