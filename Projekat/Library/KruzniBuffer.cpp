@@ -77,6 +77,28 @@ int rPop(Kruzni_Buffer * buffer, char * data, int size)
 	return 1;
 }
 
+int rRead(Kruzni_Buffer * buffer, char * data, int size)
+{
+	if (size <= buffer->taken)
+	{
+		if ((buffer->buffer_end - buffer->tail) >= size)
+		{
+			memcpy(data, buffer->tail, size);
+		}
+		else
+		{
+			int temp = buffer->buffer_end - buffer->tail;
+
+			memcpy(data, buffer->tail, temp);
+			memcpy(data + temp, buffer->buffer_start, size - temp);
+		}
+
+		return 0;
+	}
+
+	return 1;
+}
+
 int rDelete(Kruzni_Buffer * buffer, int size)
 {
 	if (size <= buffer->taken)

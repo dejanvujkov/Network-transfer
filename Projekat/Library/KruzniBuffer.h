@@ -15,4 +15,5 @@ void rFreeBuffer(Kruzni_Buffer* buffer);
 
 int rPush(Kruzni_Buffer * buffer, char* data, int size);
 int rPop(Kruzni_Buffer * buffer, char* data, int size);
+int rRead(Kruzni_Buffer * buffer, char* data, int size);
 int rDelete(Kruzni_Buffer * buffer, int size);

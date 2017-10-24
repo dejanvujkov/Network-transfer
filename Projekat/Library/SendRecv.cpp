@@ -55,8 +55,11 @@ int Send(rSocket sock, char* data, int len)
 	int iResult = 0;
 
 	//thread1 petlja koja uzima iz data i stavlja u buffer
-	while (len - h->slider /*!= 0*/)
+
+	// lock h
+	while (len - h->slider != 0)
 	{
+		//lock buffer
 		if (buffer.free > 0)
 		{
 			if ((len - h->slider) < buffer.free)
@@ -64,11 +67,55 @@ int Send(rSocket sock, char* data, int len)
 			else
 				rPush(&buffer, data + h->slider, buffer.free);
 		}
+		//unlock buffer
+		//unlock h
 		Sleep(100);
+		//lock h
 	}
+	//unlock h
+
 	// t1
 
+
+
 	//thread2 petlja koja uzima iz buffer i salje preko mreze
+
+	// lock h
+	// lock buffer
+	char* tempbuffer;
+	tempbuffer = (char*)malloc(64 * 1024);
+	while (len - h->slider != 0 && buffer.taken > 0)
+	{
+		rRead(&buffer, tempbuffer, h->cwnd);
+
+		iResult = sendto(
+			clientSocket,
+			tempbuffer,
+			h->cwnd,
+			0,
+			(LPSOCKADDR)&serverAddress,
+			sizeof(struct sockaddr));
+
+		// unlock buffer
+		// unlock h
+
+		//recvfrom();
+		// lock h
+		// lock buffer
+
+		//ako je primio dobro rDelete
+		//ako ima greska salji ponovo
+
+		// unlock buffer
+		// unlock h
+		Sleep(100);
+		// lock h
+		// lock buffer
+	}
+	// unlock buffer
+	// unlock h
+
+	//t2
 
 	// while start, (slider < datalen)
 	while (h->slider < len)
