@@ -23,14 +23,6 @@ int Send(rSocket sock, char* data, int len)
 	int iResult = 0;
 
 	/** INIT Client **/
-	int sockAddrLen = sizeof(struct sockaddr);
-	
-	sockaddr_in clientAddress;
-	memset((char*)&clientAddress, 0, sizeof(clientAddress));
-	clientAddress.sin_family = AF_INET;
-	clientAddress.sin_addr.s_addr = inet_addr(sock.addr);
-	clientAddress.sin_port = htons((u_short)sock.port);
-
 	SOCKET clientSocket = socket(AF_INET,      // IPv4 address famly
 		SOCK_DGRAM,   // datagram socket
 		IPPROTO_UDP); // UDP
@@ -41,36 +33,20 @@ int Send(rSocket sock, char* data, int len)
 		return 1;
 	}
 
-	iResult = bind(clientSocket, (LPSOCKADDR)&clientAddress, sizeof(clientAddress));
-
-	if (iResult == SOCKET_ERROR)
-	{
-		printf("Socket bind failed with error: %d\n", WSAGetLastError());
-		closesocket(clientSocket);
-		WSACleanup();
-		return 1;
-	}
-
-	/** INIT Client **/
-
-	/** INT Server**/
+	int sockAddrLen = sizeof(struct sockaddr);
 
 	sockaddr_in serverAddress;
 	memset((char*)&serverAddress, 0, sizeof(serverAddress));
 	serverAddress.sin_family = AF_INET;
 	serverAddress.sin_addr.s_addr = inet_addr(sock.addr);
 	serverAddress.sin_port = htons((u_short)sock.port);
-
-	/** INT Server**/
+	
+	int clientBuffer = CONNECTED;
+	/** INIT Client **/
 
 	/** CONNECT **/
-
-	//Slanje "Connected" serveru
-
-	int clientBuffer = CONNECTED;
-
 	iResult = sendto(clientSocket,
-		(char *)clientBuffer,
+		(char*)&clientBuffer,
 		sizeof(int),
 		0,
 		(LPSOCKADDR)&serverAddress,
@@ -82,13 +58,13 @@ int Send(rSocket sock, char* data, int len)
 		WSACleanup();
 		return 1;
 	}
-
+	
 	printf("Poslat zahtev za komunikaciju\n");
 
 	//RecvFrom Server - ocekuje se Accepted
 
 	iResult = recvfrom(clientSocket,
-		(char *)clientBuffer,
+		(char*)&clientBuffer,
 		sizeof(int),
 		0,
 		(LPSOCKADDR)&serverAddress,
@@ -105,8 +81,8 @@ int Send(rSocket sock, char* data, int len)
 		printf("Connected to server");
 		h->state = CONNECTED;
 	}
-
 	/** CONNECT **/
+
 
 	// while start, (slider < datalen)
 	while (h->slider < len)
