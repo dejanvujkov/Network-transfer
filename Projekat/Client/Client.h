@@ -9,6 +9,7 @@
 #define OUTGOING_BUFFER_SIZE 1024
 
 bool InitializeWindowsSockets();
+void ConnectToServer();
 
 // for demonstration purposes we will hard code
 // local host ip adderss

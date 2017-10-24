@@ -1,5 +1,6 @@
 #include "Client.h"
 
+
 // UDP client that uses blocking sockets
 int main(int argc, char* argv[])
 {
@@ -28,13 +29,15 @@ int main(int argc, char* argv[])
 		SOCK_DGRAM,   // datagram socket
 		IPPROTO_UDP); // UDP
 
-					  // check if socket creation succeeded
+	// check if socket creation succeeded
 	if (clientSocket == INVALID_SOCKET)
 	{
 		printf("Creating socket failed with error: %d\n", WSAGetLastError());
 		WSACleanup();
 		return 1;
 	}
+
+	ConnectToServer();
 
 	printf("Enter message from server:\n");
 
@@ -86,4 +89,10 @@ bool InitializeWindowsSockets()
 		return false;
 	}
 	return true;
+}
+
+//fja u kojoj se salje "Connected" serveru
+void ConnectToServer() {
+	
+
 }
