@@ -1,15 +1,16 @@
 #pragma once
+
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 #include <winsock2.h>
 #include <stdio.h>
 #include <conio.h>
+#include "../Library/header.h"
 
 #define SERVER_PORT 15000
 #define OUTGOING_BUFFER_SIZE 1024
 
 bool InitializeWindowsSockets();
-void ConnectToServer();
 
 // for demonstration purposes we will hard code
 // local host ip adderss
