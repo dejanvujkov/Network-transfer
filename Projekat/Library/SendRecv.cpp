@@ -31,7 +31,7 @@ DWORD WINAPI EMPTYBUFFER(LPVOID param)
 
 int Send(rSocket sock, char* data, int len)
 {
-	
+
 	/** INICIJALIZACIJA **/
 	rHelper* h;
 	h = (rHelper*)malloc(sizeof(rHelper));
@@ -44,7 +44,7 @@ int Send(rSocket sock, char* data, int len)
 	h->ssthresh = 0;
 	h->recv = 1000;			// Inicijalno mora biti veci od cwnd
 	h->slowstart = true;
-	
+
 	//Kruzni_Buffer buffer;
 	if (len < MAX_BUFFER_SIZE)
 	{
@@ -101,7 +101,7 @@ int Send(rSocket sock, char* data, int len)
 		WSACleanup();
 		return 1;
 	}
-	
+
 	printf("Poslat zahtev za komunikaciju\n");
 
 	//RecvFrom Server - ocekuje se Accepted
@@ -126,18 +126,16 @@ int Send(rSocket sock, char* data, int len)
 	}
 	/** CONNECT **/
 
-	
+
 	//thread1 petlja koja uzima iz data i stavlja u buffer
 	HANDLE thread1 = CreateThread(NULL, 0, &FromDataToBuffer, h, 0, NULL);
-	HANDLE thread3 = CreateThread(NULL, 0, &EMPTYBUFFER, h, 0, NULL);
+	//HANDLE thread3 = CreateThread(NULL, 0, &EMPTYBUFFER, h, 0, NULL);
+
+	//thread2 petlja koja uzima iz buffer i salje preko mreze
+	HANDLE thread2 = CreateThread(NULL, 0, &SendDataFromBuffer, h, 0, NULL);
 
 	getchar();
 
-	int a;
-	
-	//thread2 petlja koja uzima iz buffer i salje preko mreze
-	//HANDLE thread2 = CreateThread(NULL, 0, &SendDataFromBuffer, h, 0, NULL);
-	
 
 	//t2
 
@@ -145,7 +143,7 @@ int Send(rSocket sock, char* data, int len)
 	// while start, (slider < datalen)
 	while (h->slider < len)
 	{
-		
+
 		/** ALGORITAM **/
 		// Ako je u slow start modu, uvecavaj eksponencionalno
 		if (h->slowstart)
@@ -182,10 +180,10 @@ int Send(rSocket sock, char* data, int len)
 
 		/** SLIDER **/
 		h->slider = h->slider + h->recv;
-     
+
 	}
 	// while end
-	
+
 	rFreeBuffer(&(h->buffer));
 	free(h);
 
@@ -195,6 +193,7 @@ int Send(rSocket sock, char* data, int len)
 DWORD WINAPI FromDataToBuffer(LPVOID param)
 {
 	rHelper* h = (rHelper*)param;
+	int s = 0;
 	// lock h
 	WaitForSingleObject(h->lock, INFINITE);
 	while (h->length - h->slider != 0)
@@ -202,10 +201,20 @@ DWORD WINAPI FromDataToBuffer(LPVOID param)
 		if (h->buffer.free > 0)
 		{
 			if ((h->length - h->slider) < h->buffer.free)
-				rPush(&(h->buffer), h->data + h->slider, h->length - h->slider);
+			{
+				s = rPush(&(h->buffer), h->data + h->slider, h->length - h->slider);
+				if (s == -1)
+					return -1;
+				h->slider = h->length;
+			}
 			else
-				rPush(&(h->buffer), h->data + h->slider, h->buffer.free);
-			printf("push %d\n", h->length - h->slider);
+			{
+				s = rPush(&(h->buffer), h->data + h->slider, h->buffer.free);
+				if (s == -1)
+					return -1;
+				h->slider += s;
+			}
+			printf("\nPUSH");
 		}
 		//unlock h
 		ReleaseSemaphore(h->lock, 1, NULL);
@@ -226,18 +235,22 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 
 	char* tempbuffer;
 	tempbuffer = (char*)malloc(64 * 1024);
-	while (h->length - h->slider != 0 && h->buffer.taken > 0)
+
+	while (h->length - h->slider != 0 || h->buffer.taken > 0)
 	{
 		rRead(&(h->buffer), tempbuffer, h->cwnd);
 
-		iResult = sendto(
+		/*iResult = sendto(
 			*(h->socket),
 			tempbuffer,
 			h->cwnd,
 			0,
 			(LPSOCKADDR)h->adresa,
-			sizeof(struct sockaddr));
+			sizeof(struct sockaddr));*/
+		printf("\nSEND 100");
 
+
+		rDelete(&(h->buffer), 100);
 		// unlock buffer
 		// unlock h
 
@@ -250,7 +263,7 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 
 		// unlock buffer
 		// unlock h
-		Sleep(100);
+		Sleep(300);
 		// lock h
 		// lock buffer
 	}

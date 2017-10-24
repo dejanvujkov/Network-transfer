@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
 	socket.addr = SERVER_IP_ADDERESS;
 	socket.port = SERVER_PORT;
 
-	Send(socket, buffer, 10000);
+	Send(socket, buffer, 2000);
 
 	iResult = WSACleanup();
 	if (iResult == SOCKET_ERROR)
