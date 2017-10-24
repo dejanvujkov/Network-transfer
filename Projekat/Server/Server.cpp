@@ -84,6 +84,31 @@ int main(int argc, char* argv[])
 		int clientPort = ntohs((u_short)clientAddress.sin_port);
 
 		printf("Client connected from ip: %s, port: %d, sent: %s.\n", ipAddress, clientPort, accessBuffer);
+		
+
+
+		for (int i = 0; i < 4; i++)
+			printf("  %x  ", accessBuffer[i]);
+		
+		/* TEST */
+		SOCKET clientSocket = socket(AF_INET,      // IPv4 address famly
+			SOCK_DGRAM,   // datagram socket
+			IPPROTO_UDP); // UDP
+
+		sockaddr_in serverAddress;
+		memset((char*)&serverAddress, 0, sizeof(serverAddress));
+		serverAddress.sin_family = AF_INET;
+		serverAddress.sin_addr.s_addr = INADDR_ANY;
+		serverAddress.sin_port = htons((u_short)(SERVER_PORT+1));
+
+		iResult = sendto(
+			clientSocket,
+			accessBuffer,
+			4,
+			0,
+			(LPSOCKADDR)&serverAddress,
+			sockAddrLen);
+		/* TEST */
 
 		// possible message processing logic could be placed here
 	}

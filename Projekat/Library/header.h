@@ -1,17 +1,7 @@
 #include <WinSock2.h>
+#include "enums.h"
+#include "structs.h"
 
-int Send(char* data, int len, SOCKET* socket, LPSOCKADDR* serveraddress, int addrLen);
+int Send(rSocket socket, char* data, int len);
 int Recv(char* buffer, int len, SOCKET* socket, LPSOCKADDR* clientaddress, int addrLen);
 
-typedef struct SendHelper {
-	int slider;
-	char* data;
-	int datalen;
-	SOCKET* clientsocket;
-	LPSOCKADDR* address;
-	int addresslength;
-	int cwnd;
-	int ssthresh;
-	int recv;
-	bool slowstart;
-} SendRecvHelper;

@@ -1,32 +1,67 @@
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+
 #include "header.h"
 #include <stdlib.h>
+#include <stdio.h>
 
-int Send(char* data, int len, SOCKET* socket, LPSOCKADDR* serveraddress, int addrLen)
+int Send(rSocket sock, char* data, int len)
 {
 	/** INICIJALIZACIJA **/
-	SendRecvHelper* h;
-	h = (SendRecvHelper*)malloc(sizeof(SendRecvHelper));
-
-	h->data = data;
-	h->datalen = len;
+	rHelper* h;
+	h = (rHelper*)malloc(sizeof(rHelper));
 	h->slider = 0;
-
-	h->clientsocket = socket;
-	h->address = serveraddress;
-	h->addresslength = addrLen;
+	h->state = DISCONECTED;
 
 	h->cwnd = 10;			// Inicijalno 10
 	h->ssthresh = 0;
 	h->recv = 1000;			// Inicijalno mora biti veci od cwnd
 	h->slowstart = true;
+	/** INICIJALIZACIJA **/
+
+
+	/** INIT Client **/
+	int sockAddrLen = sizeof(struct sockaddr);
+	
+	sockaddr_in serverAddress;
+	memset((char*)&serverAddress, 0, sizeof(serverAddress));
+	serverAddress.sin_family = AF_INET;
+	serverAddress.sin_addr.s_addr = inet_addr(sock.addr);
+	serverAddress.sin_port = htons((u_short)sock.port);
+
+	SOCKET clientSocket = socket(AF_INET,      // IPv4 address famly
+		SOCK_DGRAM,   // datagram socket
+		IPPROTO_UDP); // UDP
+	/** INIT Client **/
+
+
+	/** CONNECT **/
+
+	/** CONNECT **/
+
+
+	int iResult = 0;
+
 
 	// while start, (slider < datalen)
-	while (h->slider < h->datalen)
+	while (h->slider < len)
 	{
 		/** SEND **/
 		// dejina funkcija SEND
-		//UDPSend(h->data + h->slider, h->cwnd, h->clientsocket, h->address, h->addresslength);
+		iResult = sendto(
+			clientSocket,
+			data + h->slider,
+			h->cwnd,
+			0,
+			(LPSOCKADDR)&serverAddress,
+			sizeof(struct sockaddr));
 
+		if (iResult == SOCKET_ERROR)
+		{
+			printf("sendto failed with error: %d\n", WSAGetLastError());
+			closesocket(clientSocket);
+			WSACleanup();
+			return 1;
+		}
 
 		/** RECV **/
 		// dejina funkcija RECV
@@ -74,8 +109,9 @@ int Send(char* data, int len, SOCKET* socket, LPSOCKADDR* serveraddress, int add
 	}
 	// while end
 
+	
+
 	free(h);
-	//UDPCleanup();
 
 	return 0;
 }
