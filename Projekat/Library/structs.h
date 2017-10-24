@@ -7,6 +7,8 @@ typedef struct rHelper {
 	int recv;
 	bool slowstart;
 	rConnectionState state;
+	Kruzni_Buffer buffer;
+	HANDLE lock;
 } rHelper;
 
 typedef struct rSocket {

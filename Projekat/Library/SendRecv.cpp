@@ -16,17 +16,17 @@ int Send(rSocket sock, char* data, int len)
 	h->ssthresh = 0;
 	h->recv = 1000;			// Inicijalno mora biti veci od cwnd
 	h->slowstart = true;
-
-	Kruzni_Buffer buffer;
+	
+	//Kruzni_Buffer buffer;
 	if (len < MAX_BUFFER_SIZE)
 	{
-		rInitBuffer(&buffer, len);
-		rPush(&buffer, data, len);
+		rInitBuffer(&(h->buffer), len);
+		rPush(&(h->buffer), data, len);
 	}
 	else
 	{
-		rInitBuffer(&buffer, MAX_BUFFER_SIZE);
-		rPush(&buffer, data, MAX_BUFFER_SIZE);
+		rInitBuffer(&(h->buffer), MAX_BUFFER_SIZE);
+		rPush(&(h->buffer), data, MAX_BUFFER_SIZE);
 	}
 	/** INICIJALIZACIJA **/
 
@@ -97,15 +97,15 @@ int Send(rSocket sock, char* data, int len)
 	//thread1 petlja koja uzima iz data i stavlja u buffer
 
 	// lock h
+	//lock buffer
 	while (len - h->slider != 0)
 	{
-		//lock buffer
-		if (buffer.free > 0)
+		if (h->buffer.free > 0)
 		{
-			if ((len - h->slider) < buffer.free)
-				rPush(&buffer, data + h->slider, len - h->slider);
+			if ((len - h->slider) < h->buffer.free)
+				rPush(&(h->buffer), data + h->slider, len - h->slider);
 			else
-				rPush(&buffer, data + h->slider, buffer.free);
+				rPush(&(h->buffer), data + h->slider, h->buffer.free);
 		}
 		//unlock buffer
 		//unlock h
@@ -116,15 +116,17 @@ int Send(rSocket sock, char* data, int len)
 
 	// t1
 
+	
+
 	//thread2 petlja koja uzima iz buffer i salje preko mreze
 
 	// lock h
 	// lock buffer
 	char* tempbuffer;
 	tempbuffer = (char*)malloc(64 * 1024);
-	while (len - h->slider != 0 && buffer.taken > 0)
+	while (len - h->slider != 0 && h->buffer.taken > 0)
 	{
-		rRead(&buffer, tempbuffer, h->cwnd);
+		rRead(&(h->buffer), tempbuffer, h->cwnd);
 
 		iResult = sendto(
 			clientSocket,
