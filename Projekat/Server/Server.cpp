@@ -1,5 +1,5 @@
 #include "Server.h"
-
+#include "../Library/header.h"
 int main(int argc, char* argv[])
 {
 	// Server address
@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
 		// receive client message
 		iResult = recvfrom(serverSocket,
 			accessBuffer,
-			ACCESS_BUFFER_SIZE,
+			sizeof(int),
 			0,
 			(LPSOCKADDR)&clientAddress,
 			&sockAddrLen);
@@ -76,6 +76,8 @@ int main(int argc, char* argv[])
 			continue;
 		}
 
+		int *poruka = (int*)accessBuffer;
+
 		char ipAddress[IP_ADDRESS_LEN];
 		// copy client ip to local char[]
 		strcpy_s(ipAddress, sizeof(ipAddress), inet_ntoa(clientAddress.sin_addr));
@@ -85,31 +87,32 @@ int main(int argc, char* argv[])
 
 		printf("Client connected from ip: %s, port: %d, sent: %s.\n", ipAddress, clientPort, accessBuffer);
 		
-
-
 		for (int i = 0; i < 4; i++)
 			printf("  %x  ", accessBuffer[i]);
+
+
+		if (*poruka == CONNECTED) {
+
+			//sendto "Accepted" Clinet
+			*poruka = ACCEPTED;
+			iResult = sendto(serverSocket,
+				(char *)poruka,
+				sizeof(int),
+				0,
+				(LPSOCKADDR)&clientAddress,
+				sockAddrLen);
+
+			if (iResult == SOCKET_ERROR) {
+				printf("Sendto failed with error: %d\n", WSAGetLastError());
+				closesocket(serverSocket);
+				WSACleanup();
+				return 1;
+			}
+
+
+			printf("Server poslao Accepted");
+		}
 		
-		/* TEST */
-		SOCKET clientSocket = socket(AF_INET,      // IPv4 address famly
-			SOCK_DGRAM,   // datagram socket
-			IPPROTO_UDP); // UDP
-
-		sockaddr_in serverAddress;
-		memset((char*)&serverAddress, 0, sizeof(serverAddress));
-		serverAddress.sin_family = AF_INET;
-		serverAddress.sin_addr.s_addr = INADDR_ANY;
-		serverAddress.sin_port = htons((u_short)(SERVER_PORT+1));
-
-		iResult = sendto(
-			clientSocket,
-			accessBuffer,
-			4,
-			0,
-			(LPSOCKADDR)&serverAddress,
-			sockAddrLen);
-		/* TEST */
-
 		// possible message processing logic could be placed here
 	}
 
