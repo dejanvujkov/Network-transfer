@@ -16,12 +16,12 @@ int Send(rSocket sock, char* data, int len)
 	h->ssthresh = 0;
 	h->recv = 1000;			// Inicijalno mora biti veci od cwnd
 	h->slowstart = true;
-	
+	/** INICIJALIZACIJA **/
 
 
+	/** INIT Client **/
 	int sockAddrLen = sizeof(struct sockaddr);
-
-	// INIT Client
+	
 	sockaddr_in serverAddress;
 	memset((char*)&serverAddress, 0, sizeof(serverAddress));
 	serverAddress.sin_family = AF_INET;
@@ -31,51 +31,15 @@ int Send(rSocket sock, char* data, int len)
 	SOCKET clientSocket = socket(AF_INET,      // IPv4 address famly
 		SOCK_DGRAM,   // datagram socket
 		IPPROTO_UDP); // UDP
-	// INIT Client
+	/** INIT Client **/
 
-	// INIT Server
-	sockaddr_in localServerAddress;
-	memset((char*)&localServerAddress, 0, sizeof(localServerAddress));
-	localServerAddress.sin_family = AF_INET; /*set server address protocol family*/
-	localServerAddress.sin_addr.s_addr = INADDR_ANY;
-	localServerAddress.sin_port = htons(sock.port + 1);
 
-	SOCKET serverSocket = socket(AF_INET,      // IPv4 address famly
-		SOCK_DGRAM,   // datagram socket
-		IPPROTO_UDP); // UDP
-	
-	bind(serverSocket, (LPSOCKADDR)&localServerAddress, sizeof(localServerAddress));
-	// INIT Server
-	
+	/** CONNECT **/
+
+	/** CONNECT **/
+
 
 	int iResult = 0;
-
-	for (int i = 0; i < 4; i++)
-		printf("  %x  ", ((char*)&len)[i]);
-	
-	/** CONNECT **/
-	iResult = sendto(
-		clientSocket,
-		(char*)&len,
-		4,
-		0,
-		(LPSOCKADDR)&serverAddress,
-		sockAddrLen);
-
-
-
-	char* buffer;
-	buffer = (char*)malloc(100);
-
-	iResult = recvfrom(serverSocket,
-		buffer,
-		4,
-		0,
-		(LPSOCKADDR)&localServerAddress,
-		&sockAddrLen);
-
-	for (int i = 0; i < 4; i++)
-		printf("  %x  ", buffer[i]);
 
 
 	// while start, (slider < datalen)
