@@ -161,27 +161,6 @@ int Send(rSocket sock, char* data, int len)
 	// while start, (slider < datalen)
 	while (h->slider < len)
 	{
-		/** SEND **/
-		// dejina funkcija SEND
-		iResult = sendto(
-			clientSocket,
-			data + h->slider,
-			h->cwnd,
-			0,
-			(LPSOCKADDR)&serverAddress,
-			sizeof(struct sockaddr));
-
-		if (iResult == SOCKET_ERROR)
-		{
-			printf("sendto failed with error: %d\n", WSAGetLastError());
-			closesocket(clientSocket);
-			WSACleanup();
-			return 1;
-		}
-
-		/** RECV **/
-		// dejina funkcija RECV
-		//recv = UDPRecv(**);
 
 		/** ALGORITAM **/
 		// Ako je u slow start modu, uvecavaj eksponencionalno
