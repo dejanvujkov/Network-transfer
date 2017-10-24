@@ -1,9 +1,7 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
+#define MAX_BUFFER_SIZE 10*1024*1024
 
 #include "header.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include "enums.h"
 
 int Send(rSocket sock, char* data, int len)
 {
