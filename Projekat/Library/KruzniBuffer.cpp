@@ -21,103 +21,117 @@ void rFreeBuffer(Kruzni_Buffer * buffer)
 
 int rPush(Kruzni_Buffer * buffer, char * data, int size)
 {
+	// Velicina podataka koja se dodaje u buffer
+	int tempSize;
 	if (size <= buffer->free)
+		tempSize = size;
+	else
+		tempSize = buffer->free;
+
+	// Ako ima prelamanje buffera
+	if ((buffer->buffer_end - buffer->head) >= tempSize)
 	{
-		if ((buffer->buffer_end - buffer->head) >= size)
-		{
-			memcpy(buffer->head, data, size);
+		memcpy(buffer->head, data, tempSize);
 
-			buffer->head += size;
-		}
-		else
-		{
-			int temp = buffer->buffer_end - buffer->head;
+		buffer->head += tempSize;
+	}
+	else
+	{
+		int temp = buffer->buffer_end - buffer->head;
 
-			memcpy(buffer->head, data, temp);
-			memcpy(buffer->buffer_start, data + temp, size - temp);
+		memcpy(buffer->head, data, temp);
+		memcpy(buffer->buffer_start, data + temp, tempSize - temp);
 
-			buffer->head = buffer->buffer_start + (size - temp);
-		}
-
-		buffer->free -= size;
-		buffer->taken += size;
-
-		return size;
+		buffer->head = buffer->buffer_start + (tempSize - temp);
 	}
 
-	return -1;
+	buffer->free -= tempSize;
+	buffer->taken += tempSize;
+
+	return tempSize;
 }
 
 int rPop(Kruzni_Buffer * buffer, char * data, int size)
 {
-	if (size <= buffer->taken)
+	// Velicina podataka koja se uzima
+	int tempSize;
+	if (size <= buffer->taken)			// Ako se trazi bar onoliko koliko ima / 100 : 200 -> 100
+		tempSize = size;
+	else								// Ako se trazi vise nego sto ima / 100 : 20 -> 20
+		tempSize = buffer->taken;
+
+	// Ako ima prelamanje buffera
+	if ((buffer->buffer_end - buffer->tail) >= tempSize)
 	{
-		if ((buffer->buffer_end - buffer->tail) >= size)
-		{
-			memcpy(data, buffer->tail, size);
+		memcpy(data, buffer->tail, tempSize);
+		buffer->tail += tempSize;
+	}
+	else
+	{
+		int temp = buffer->buffer_end - buffer->tail;
+		memcpy(data, buffer->tail, temp);
+		memcpy(data + temp, buffer->buffer_start, tempSize - temp);
+		buffer->tail = buffer->buffer_start + (tempSize - temp);
 
-			buffer->tail += size;
-		}
-		else
-		{
-			int temp = buffer->buffer_end - buffer->tail;
-
-			memcpy(data, buffer->tail, temp);
-			memcpy(data + temp, buffer->buffer_start, size - temp);
-
-			buffer->tail = buffer->buffer_start + (size - temp);
-		}
-
-		buffer->free += size;
-		buffer->taken -= size;
-
-		return size;
 	}
 
-	return -1;
+	buffer->free += tempSize;
+	buffer->taken -= tempSize;
+
+	return tempSize;
 }
 
 int rRead(Kruzni_Buffer * buffer, char * data, int size)
 {
-	if (size <= buffer->taken)
+	// Velicina podataka koja se uzima
+	int tempSize;
+	if (size <= buffer->taken)			// Ako se trazi bar onoliko koliko ima / 100 : 200 -> 100
+		tempSize = size;
+	else								// Ako se trazi vise nego sto ima / 100 : 20 -> 20
+		tempSize = buffer->taken;
+
+	// Ako ima prelamanje buffera
+	if ((buffer->buffer_end - buffer->tail) >= tempSize)
 	{
-		if ((buffer->buffer_end - buffer->tail) >= size)
-		{
-			memcpy(data, buffer->tail, size);
-		}
-		else
-		{
-			int temp = buffer->buffer_end - buffer->tail;
+		memcpy(data, buffer->tail, tempSize);
 
-			memcpy(data, buffer->tail, temp);
-			memcpy(data + temp, buffer->buffer_start, size - temp);
-		}
+	}
+	else
+	{
+		int temp = buffer->buffer_end - buffer->tail;
 
-		return size;
+		memcpy(data, buffer->tail, temp);
+		memcpy(data + temp, buffer->buffer_start, tempSize - temp);
+
 	}
 
-	return -1;
+	return tempSize;
 }
 
 int rDelete(Kruzni_Buffer * buffer, int size)
 {
-	if (size <= buffer->taken)
+	// Velicina podataka koja se uzima
+	int tempSize;
+	if (size <= buffer->taken)			// Ako se trazi bar onoliko koliko ima / 100 : 200 -> 100
+		tempSize = size;
+	else								// Ako se trazi vise nego sto ima / 100 : 20 -> 20
+		tempSize = buffer->taken;
+
+	// Ako ima prelamanje buffera
+	if ((buffer->buffer_end - buffer->tail) >= tempSize)
 	{
-		if ((buffer->buffer_end - buffer->tail) >= size)
-		{
-			buffer->tail += size;
-		}
-		else
-		{
-			int temp = buffer->buffer_end - buffer->tail;
-			buffer->tail = buffer->buffer_start + (size - temp);
-		}
+		buffer->tail += tempSize;
 
-		buffer->free += size;
-		buffer->taken -= size;
+	}
+	else
+	{
+		int temp = buffer->buffer_end - buffer->tail;
+		buffer->tail = buffer->buffer_start + (tempSize - temp);
 
-		return size;
 	}
 
-	return -1;
+	buffer->free += tempSize;
+	buffer->taken -= tempSize;
+
+	return tempSize;
 }

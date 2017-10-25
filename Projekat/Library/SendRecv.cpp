@@ -305,7 +305,7 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 
 		// unlock buffer
 		// unlock h
-		Sleep(10);
+		//Sleep(10);
 		// lock h
 		// lock buffer
 	}
