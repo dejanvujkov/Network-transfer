@@ -50,8 +50,8 @@ int main(int argc, char* argv[])
 	while (1)
 	{
 		char* messageBuffer;
-		int slider;
-		int messageSize;
+		int slider = 0;
+		int messageSize = 0;
 		char* accessBuffer;
 		accessBuffer = (char*)malloc(ACCESS_BUFFER_SIZE);
 		memset(accessBuffer, 0, ACCESS_BUFFER_SIZE);
@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
 		// receive client message
 		iResult = recvfrom(serverSocket,
 			accessBuffer,
-			2*sizeof(int),
+			ACCESS_BUFFER_SIZE,
 			0,
 			(LPSOCKADDR)&clientAddress,
 			&sockAddrLen);
@@ -101,7 +101,7 @@ int main(int argc, char* argv[])
 
 				iResult = sendto(serverSocket,
 					accessBuffer,
-					sizeof(int),
+					sizeof(rMessageHeader),
 					0,
 					(LPSOCKADDR)&clientAddress,
 					sockAddrLen);
@@ -152,11 +152,11 @@ int main(int argc, char* argv[])
 				continue;
 			}
 
-			
-			memcpy(message, messageBuffer, messageSize);
-			slider += messageSize;
+			printf("\n[%d] Recieved %d ", header->id, header->size);
+			memcpy(message, messageBuffer, header->size);
+			slider += header->size;
 
-			//header->state = ASJBD;
+			header->state = RECIEVED;
 
 			iResult = sendto(serverSocket,
 				accessBuffer,
@@ -165,6 +165,11 @@ int main(int argc, char* argv[])
 				(LPSOCKADDR)&clientAddress,
 				sockAddrLen);
 
+			if (iResult == SOCKET_ERROR)
+			{
+				printf("recvfrom failed with error: %d\n", WSAGetLastError());
+				continue;
+			}
 			/*for (int i = 0; i < header->size; i++)
 				printf("  %x  ", message[i]);*/
 
