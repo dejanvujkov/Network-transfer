@@ -93,7 +93,6 @@ int Send(rSocket sock, char* data, int len)
 	}
 	/** CONNECT **/
 
-
 	//thread1 petlja koja uzima iz data i stavlja u buffer
 
 	// lock h
