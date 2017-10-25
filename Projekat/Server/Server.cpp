@@ -49,10 +49,15 @@ int main(int argc, char* argv[])
 	// Main server loop
 	while (1)
 	{
-		char* accessBuffer;
 		char* messageBuffer;
+		int slider;
+		int messageSize;
+		char* accessBuffer;
 		accessBuffer = (char*)malloc(ACCESS_BUFFER_SIZE);
 		memset(accessBuffer, 0, ACCESS_BUFFER_SIZE);
+
+		rMessageHeader* header;
+		char* message;
 
 		sockaddr_in clientAddress;
 		memset(&clientAddress, 0, sizeof(sockaddr_in));
@@ -80,15 +85,20 @@ int main(int argc, char* argv[])
 		
 		/*for (int i = 0; i < 4; i++)
 			printf("  %x  ", accessBuffer[i]);*/
+
+		header = (rMessageHeader*)accessBuffer;
+		message = accessBuffer + sizeof(rMessageHeader);
+		messageSize = header->size;
 		
-		if (*(int*)accessBuffer == REQUEST) {
+		if (header->id == REQUEST) {
 						
-			messageBuffer = (char*)malloc(*(int*)accessBuffer + 1);
+			messageBuffer = (char*)malloc(messageSize);
 
 			if (messageBuffer != NULL)
 			{
 				//sendto "Accepted" Clinet
-				*(int*)accessBuffer = ACCEPTED;
+				header->id = ACCEPTED;
+
 				iResult = sendto(serverSocket,
 					accessBuffer,
 					sizeof(int),
@@ -108,7 +118,7 @@ int main(int argc, char* argv[])
 			else
 			{
 				//sendto "Rejected" Clinet
-				*(int*)accessBuffer = REJECTED;
+				header->id = REJECTED;
 				iResult = sendto(serverSocket,
 					accessBuffer,
 					sizeof(int),
@@ -127,26 +137,39 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		iResult = recvfrom(serverSocket,
-			accessBuffer,
-			ACCESS_BUFFER_SIZE,
-			0,
-			(LPSOCKADDR)&clientAddress,
-			&sockAddrLen);
-
-		if (iResult == SOCKET_ERROR)
+		while (messageSize - slider != 0)
 		{
-			printf("recvfrom failed with error: %d\n", WSAGetLastError());
-			continue;
+			iResult = recvfrom(serverSocket,
+				accessBuffer,
+				ACCESS_BUFFER_SIZE,
+				0,
+				(LPSOCKADDR)&clientAddress,
+				&sockAddrLen);
+
+			if (iResult == SOCKET_ERROR)
+			{
+				printf("recvfrom failed with error: %d\n", WSAGetLastError());
+				continue;
+			}
+
+			
+			memcpy(message, messageBuffer, messageSize);
+			slider += messageSize;
+
+			//header->state = ASJBD;
+
+			iResult = sendto(serverSocket,
+				accessBuffer,
+				sizeof(rMessageHeader),
+				0,
+				(LPSOCKADDR)&clientAddress,
+				sockAddrLen);
+
+			/*for (int i = 0; i < header->size; i++)
+				printf("  %x  ", message[i]);*/
+
 		}
 		
-		rMessageHeader* header;
-		char* message;
-		header = (rMessageHeader*)accessBuffer;
-		message = accessBuffer + sizeof(rMessageHeader);
-
-		for (int i = 0; i < header->size; i++)
-		printf("  %x  ", message[i]);
 
 		// possible message processing logic could be placed here
 	}

@@ -1,6 +1,5 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
-//#define MAX_BUFFER_SIZE 10*1024*1024
-#define MAX_BUFFER_SIZE 1000
+#define MAX_BUFFER_SIZE 10*1024*1024
 
 #include "header.h"
 
