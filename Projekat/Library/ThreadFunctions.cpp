@@ -4,38 +4,36 @@ DWORD WINAPI FromDataToBuffer(LPVOID param)
 {
 	rHelper* h = (rHelper*)param;
 	int s = 0;
-	// lock h
+	int tempSize;
 	WaitForSingleObject(h->lock, INFINITE);
+	// Stavlja podatke na buffer dok ne dodje do kraja
 	while (h->length - h->slider != 0)
 	{
+		// Ako buffer ima slobodan prostor, popuni ga
 		if (h->buffer.free > 0)
 		{
+			// velizina ako poruka moze da stane u slobodan prostor
 			if ((h->length - h->slider) < h->buffer.free)
 			{
-				s = rPush(&(h->buffer), h->data + h->slider, h->length - h->slider);
-				if (s == -1)
-					return -1;
-				h->slider = h->length;
+				tempSize = h->length - h->slider;
 			}
+			// Velicina ako poruka ne moze da stane u slobodan prostor
 			else
 			{
-				if (h->slider > 99000000)
-					printf("");
-
-				s = rPush(&(h->buffer), h->data + h->slider, h->buffer.free);
-				if (s == -1)
-					return -1;
-				h->slider += s;
+				tempSize = h->buffer.free;
 			}
+
+			// Popunjavanje buffera velicinom definisanom iznad
+			s = rPush(&(h->buffer), h->data + h->slider, tempSize);
+			// Pomeranje prozora prebacednog dela poruke
+			h->slider += s;
+
 			printf("\nPUSH %d", s);
 		}
-		//unlock h
 		ReleaseSemaphore(h->lock, 1, NULL);
 		Sleep(100);
-		//lock h
 		WaitForSingleObject(h->lock, INFINITE);
 	}
-	//unlock h
 	ReleaseSemaphore(h->lock, 1, NULL);
 
 	return 0;
@@ -56,6 +54,7 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 
 	int sockAddrLen = sizeof(struct sockaddr);
 
+	WaitForSingleObject(h->lock, INFINITE);
 	while (h->length - h->slider != 0 || h->buffer.taken > 0)
 	{
 		header->id = ++id;
@@ -73,6 +72,9 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 
 		printf("\n[%d] Sent %d ", header->id, header->size);
 
+		// Dok ne dodje odgovor moze da se oslobodi h
+		ReleaseSemaphore(h->lock, 1, NULL);
+
 		iResult = recvfrom(*(h->socket),
 			tempbuffer,
 			sizeof(rMessageHeader),
@@ -86,34 +88,26 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 			return 1;
 		}
 
-		//ako je okej stigla poruka
-		if (header->state == RECIEVED) {
+		WaitForSingleObject(h->lock, INFINITE);
 
+		// Ako je poruka dostavljena, brise se iz buffera
+		if (header->state == RECIEVED) 
+		{
 			rDelete(&(h->buffer), header->size);
 		}
-		else {
+		// Ako nije dostavljena ponovo se salje, bez pomeranja buffera
+		else 
+		{
 			continue;
 		}
 
-
-		// unlock buffer
-		// unlock h
-
-		//recvfrom();
-		// lock h
-		// lock buffer
-
-		//ako je primio dobro rDelete
-		//ako ima greska salji ponovo
-
-		// unlock buffer
-		// unlock h
-		//Sleep(10);
-		// lock h
-		// lock buffer
+		ReleaseSemaphore(h->lock, 1, NULL);
+		// ALGORITAM OVDE
+		WaitForSingleObject(h->lock, INFINITE);
 	}
-	// unlock buffer
-	// unlock h
+	ReleaseSemaphore(h->lock, 1, NULL);
+
+	free(tempbuffer);
 
 	return 0;
 }
