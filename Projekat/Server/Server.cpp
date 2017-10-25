@@ -2,15 +2,9 @@
 #include "../Library/header.h"
 int main(int argc, char* argv[])
 {
-	// Server address
 	sockaddr_in serverAddress;
-	// Server's socket
 	int serverPort = SERVER_PORT;
-	// size of sockaddr structure
 	int sockAddrLen = sizeof(struct sockaddr);
-	// buffer we will use to receive client message
-	char accessBuffer[ACCESS_BUFFER_SIZE];
-	// variable used to store function return value
 	int iResult;
 
 	if (InitializeWindowsSockets() == false)
@@ -55,13 +49,14 @@ int main(int argc, char* argv[])
 	// Main server loop
 	while (1)
 	{
-		char* buffer;
-
+		char* accessBuffer;
+		char* messageBuffer;
+		accessBuffer = (char*)malloc(ACCESS_BUFFER_SIZE);
+		memset(accessBuffer, 0, ACCESS_BUFFER_SIZE);
 
 		sockaddr_in clientAddress;
 		memset(&clientAddress, 0, sizeof(sockaddr_in));
-
-		memset(accessBuffer, 0, ACCESS_BUFFER_SIZE);
+				
 
 		// receive client message
 		iResult = recvfrom(serverSocket,
@@ -77,24 +72,20 @@ int main(int argc, char* argv[])
 			continue;
 		}
 
-
 		char ipAddress[IP_ADDRESS_LEN];
-		// copy client ip to local char[]
 		strcpy_s(ipAddress, sizeof(ipAddress), inet_ntoa(clientAddress.sin_addr));
-		// convert port number from TCP/IP byte order to
-		// little endian byte order
 		int clientPort = ntohs((u_short)clientAddress.sin_port);
 
 		printf("Client connected from ip: %s, port: %d, sent: %s.\n", ipAddress, clientPort, accessBuffer);
 		
-		for (int i = 0; i < 4; i++)
-			printf("  %x  ", accessBuffer[i]);
-
-
+		/*for (int i = 0; i < 4; i++)
+			printf("  %x  ", accessBuffer[i]);*/
+		
 		if (*(int*)accessBuffer == REQUEST) {
+						
+			messageBuffer = (char*)malloc(*(int*)accessBuffer + 1);
 
-			buffer = (char*)malloc(*(int*)accessBuffer + 1);
-			if (buffer != NULL)
+			if (messageBuffer != NULL)
 			{
 				//sendto "Accepted" Clinet
 				*(int*)accessBuffer = ACCEPTED;
