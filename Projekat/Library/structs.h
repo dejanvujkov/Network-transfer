@@ -22,6 +22,7 @@ typedef struct rSocket {
 } rSocket;
 
 typedef struct rMessageHeader {
+	rMessageState state;
 	int id;
 	int size;
 };

@@ -7,3 +7,8 @@ enum rConnectionState {
 	CONNECTED,
 	DISCONNECTED
 };
+
+enum rMessageState {
+	SENT,
+	RECIEVED
+};
