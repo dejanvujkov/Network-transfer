@@ -143,6 +143,7 @@
   <ItemGroup>
     <ClCompile Include="KruzniBuffer.cpp" />
     <ClCompile Include="SendRecv.cpp" />
+    <ClCompile Include="ThreadFunctions.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

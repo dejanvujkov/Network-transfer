@@ -1,5 +1,15 @@
 #pragma once
 
+typedef struct Kruzni_Buffer
+{
+	char* buffer_start;
+	char* buffer_end;
+	char* head;
+	char* tail;
+	int taken;
+	int free;
+}Kruzni_Buffer;
+
 typedef struct rHelper {
 	int length;
 	char* data;

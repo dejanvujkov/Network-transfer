@@ -1,6 +1,4 @@
-#include "KruzniBuffer.h"
-#include <stdlib.h>
-#include <string.h>
+#include "header.h"
 
 void rInitBuffer(Kruzni_Buffer * buffer, int size)
 {
