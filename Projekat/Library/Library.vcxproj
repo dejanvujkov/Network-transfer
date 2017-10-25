@@ -138,6 +138,7 @@
     <ClInclude Include="header.h" />
     <ClInclude Include="KruzniBuffer.h" />
     <ClInclude Include="structs.h" />
+    <ClInclude Include="ThreadHeaders.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="KruzniBuffer.cpp" />

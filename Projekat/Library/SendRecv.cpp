@@ -1,32 +1,6 @@
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
-#define MAX_BUFFER_SIZE 10*1024*1024
+
 
 #include "header.h"
-
-DWORD WINAPI FromDataToBuffer(LPVOID param);
-DWORD WINAPI SendDataFromBuffer(LPVOID param);
-
-DWORD WINAPI EMPTYBUFFER(LPVOID param)
-{
-	rHelper *h;
-	h = (rHelper*)param;
-	char* empty;
-	empty = (char*)malloc(100);
-
-	WaitForSingleObject(h->lock, INFINITE);
-	while (h->slider != h->length)
-	{
-		rPop(&(h->buffer), empty, 100);
-
-		printf("pop 100\n");
-
-		ReleaseSemaphore(h->lock, 1, NULL);
-		Sleep(2000);
-		WaitForSingleObject(h->lock, INFINITE);
-	}
-	ReleaseSemaphore(h->lock, 1, NULL);
-	return 0;
-}
 
 int Send(rSocket sock, char* data, int len)
 {
@@ -39,9 +13,9 @@ int Send(rSocket sock, char* data, int len)
 	h->slider = 0;
 	h->state = DISCONNECTED;
 
-	h->cwnd = 1000;			// Inicijalno 10
+	h->cwnd = 64000;			// Inicijalno 10
 	h->ssthresh = 0;
-	h->recv = 1000;			// Inicijalno mora biti veci od cwnd
+	h->recv = 100000;			// Inicijalno mora biti veci od cwnd
 	h->slowstart = true;
 
 	//Kruzni_Buffer buffer;
@@ -55,6 +29,7 @@ int Send(rSocket sock, char* data, int len)
 	{
 		rInitBuffer(&(h->buffer), MAX_BUFFER_SIZE);
 		rPush(&(h->buffer), data, MAX_BUFFER_SIZE);
+		h->slider = MAX_BUFFER_SIZE;
 	}
 
 	h->lock = CreateSemaphore(0, 1, 1, NULL);
@@ -241,16 +216,19 @@ DWORD WINAPI FromDataToBuffer(LPVOID param)
 			}
 			else
 			{
+				if (h->slider > 99000000)
+					printf("");
+
 				s = rPush(&(h->buffer), h->data + h->slider, h->buffer.free);
 				if (s == -1)
 					return -1;
 				h->slider += s;
 			}
-			printf("\nPUSH");
+			printf("\nPUSH %d", s);
 		}
 		//unlock h
 		ReleaseSemaphore(h->lock, 1, NULL);
-		Sleep(10);
+		Sleep(100);
 		//lock h
 		WaitForSingleObject(h->lock, INFINITE);
 	}
