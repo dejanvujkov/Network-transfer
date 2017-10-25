@@ -55,17 +55,18 @@ int main(int argc, char* argv[])
 	// Main server loop
 	while (1)
 	{
-		// clientAddress will be set from recvfrom
+		char* buffer;
+
+
 		sockaddr_in clientAddress;
 		memset(&clientAddress, 0, sizeof(sockaddr_in));
 
-		// set whole buffer to zero
 		memset(accessBuffer, 0, ACCESS_BUFFER_SIZE);
 
 		// receive client message
 		iResult = recvfrom(serverSocket,
 			accessBuffer,
-			sizeof(int),
+			2*sizeof(int),
 			0,
 			(LPSOCKADDR)&clientAddress,
 			&sockAddrLen);
@@ -76,7 +77,6 @@ int main(int argc, char* argv[])
 			continue;
 		}
 
-		int *poruka = (int*)accessBuffer;
 
 		char ipAddress[IP_ADDRESS_LEN];
 		// copy client ip to local char[]
@@ -91,26 +91,49 @@ int main(int argc, char* argv[])
 			printf("  %x  ", accessBuffer[i]);
 
 
-		if (*poruka == REQUEST) {
+		if (*(int*)accessBuffer == REQUEST) {
 
-			//sendto "Accepted" Clinet
-			*poruka = ACCEPTED;
-			iResult = sendto(serverSocket,
-				(char *)poruka,
-				sizeof(int),
-				0,
-				(LPSOCKADDR)&clientAddress,
-				sockAddrLen);
+			buffer = (char*)malloc(*(int*)accessBuffer + 1);
+			if (buffer != NULL)
+			{
+				//sendto "Accepted" Clinet
+				*(int*)accessBuffer = ACCEPTED;
+				iResult = sendto(serverSocket,
+					accessBuffer,
+					sizeof(int),
+					0,
+					(LPSOCKADDR)&clientAddress,
+					sockAddrLen);
 
-			if (iResult == SOCKET_ERROR) {
-				printf("Sendto failed with error: %d\n", WSAGetLastError());
-				closesocket(serverSocket);
-				WSACleanup();
-				return 1;
+				if (iResult == SOCKET_ERROR) {
+					printf("Sendto failed with error: %d\n", WSAGetLastError());
+					closesocket(serverSocket);
+					WSACleanup();
+					return 1;
+				}
+				
+				printf("Server poslao Accepted\n");
 			}
+			else
+			{
+				//sendto "Rejected" Clinet
+				*(int*)accessBuffer = REJECTED;
+				iResult = sendto(serverSocket,
+					accessBuffer,
+					sizeof(int),
+					0,
+					(LPSOCKADDR)&clientAddress,
+					sockAddrLen);
 
+				if (iResult == SOCKET_ERROR) {
+					printf("Sendto failed with error: %d\n", WSAGetLastError());
+					closesocket(serverSocket);
+					WSACleanup();
+					return 1;
+				}
 
-			printf("Server poslao Accepted\n");
+				printf("Server poslao Rejected\n");
+			}
 		}
 		
 		// possible message processing logic could be placed here

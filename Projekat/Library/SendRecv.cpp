@@ -84,13 +84,16 @@ int Send(rSocket sock, char* data, int len)
 	h->socket = &clientSocket;
 	h->adresa = &serverAddress;
 
-	int clientBuffer = REQUEST;
 	/** INIT Client **/
 
 	/** CONNECT **/
+	int message[2];
+	message[0] = REQUEST;
+	message[1] = len;
+
 	iResult = sendto(clientSocket,
-		(char*)&clientBuffer,
-		sizeof(int),
+		(char*)&message,
+		2*sizeof(int),
 		0,
 		(LPSOCKADDR)&serverAddress,
 		sockAddrLen);
@@ -107,7 +110,7 @@ int Send(rSocket sock, char* data, int len)
 	//RecvFrom Server - ocekuje se Accepted
 
 	iResult = recvfrom(clientSocket,
-		(char*)&clientBuffer,
+		(char*)&message,
 		sizeof(int),
 		0,
 		(LPSOCKADDR)&serverAddress,
@@ -119,7 +122,7 @@ int Send(rSocket sock, char* data, int len)
 		return 1;
 	}
 
-	if (clientBuffer == ACCEPTED) {
+	if (message[0] == ACCEPTED) {
 
 		printf("Connected to server");
 		h->state = CONNECTED;
