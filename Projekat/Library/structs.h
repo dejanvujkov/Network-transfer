@@ -20,3 +20,8 @@ typedef struct rSocket {
 	char* addr;
 	int port;
 } rSocket;
+
+typedef struct rMessageHeader {
+	int id;
+	int size;
+};

@@ -126,7 +126,28 @@ int main(int argc, char* argv[])
 				printf("Server poslao Rejected\n");
 			}
 		}
+
+		iResult = recvfrom(serverSocket,
+			accessBuffer,
+			ACCESS_BUFFER_SIZE,
+			0,
+			(LPSOCKADDR)&clientAddress,
+			&sockAddrLen);
+
+		if (iResult == SOCKET_ERROR)
+		{
+			printf("recvfrom failed with error: %d\n", WSAGetLastError());
+			continue;
+		}
 		
+		rMessageHeader* header;
+		char* message;
+		header = (rMessageHeader*)accessBuffer;
+		message = accessBuffer + sizeof(rMessageHeader);
+
+		for (int i = 0; i < header->size; i++)
+		printf("  %x  ", message[i]);
+
 		// possible message processing logic could be placed here
 	}
 
