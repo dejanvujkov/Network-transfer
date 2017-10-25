@@ -10,6 +10,7 @@
 #include "enums.h"
 #include "KruzniBuffer.h"
 #include "ThreadHeaders.h"
+#include "InitializeAndConnect.h"
 #include "structs.h"
 
 int Send(rSocket socket, char* data, int len);

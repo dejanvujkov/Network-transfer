@@ -6,89 +6,45 @@ int Send(rSocket sock, char* data, int len)
 {
 
 	/** INICIJALIZACIJA **/
+
 	rHelper* h;
 	h = (rHelper*)malloc(sizeof(rHelper));
-	h->length = len;
-	h->data = data;
-	h->slider = 0;
-	h->state = DISCONNECTED;
-
-	h->cwnd = 64000;			// Inicijalno 10
-	h->ssthresh = 0;
-	h->recv = 100000;			// Inicijalno mora biti veci od cwnd
-	h->slowstart = true;
-
-	//Kruzni_Buffer buffer;
-	if (len < MAX_BUFFER_SIZE)
-	{
-		rInitBuffer(&(h->buffer), len);
-		rPush(&(h->buffer), data, len);
-		h->slider = len;
-	}
-	else
-	{
-		rInitBuffer(&(h->buffer), MAX_BUFFER_SIZE);
-		rPush(&(h->buffer), data, MAX_BUFFER_SIZE);
-		h->slider = MAX_BUFFER_SIZE;
-	}
-
-	h->lock = CreateSemaphore(0, 1, 1, NULL);
-	/** INICIJALIZACIJA **/
-
-	int iResult = 0;
-
-	/** INIT Client **/
-	SOCKET clientSocket = socket(AF_INET,      // IPv4 address famly
-		SOCK_DGRAM,   // datagram socket
-		IPPROTO_UDP); // UDP
-
-	if (clientSocket == INVALID_SOCKET) {
-		printf("Creating client socket failed with error: %d\n", WSAGetLastError());
-		WSACleanup();
-		return 1;
-	}
 
 	int sockAddrLen = sizeof(struct sockaddr);
+	
+	int iResult = 0;
 
-	sockaddr_in serverAddress;
-	memset((char*)&serverAddress, 0, sizeof(serverAddress));
-	serverAddress.sin_family = AF_INET;
-	serverAddress.sin_addr.s_addr = inet_addr(sock.addr);
-	serverAddress.sin_port = htons((u_short)sock.port);
+	Inicijalizuj(h, &sock, data, len);
 
-	h->socket = &clientSocket;
-	h->adresa = &serverAddress;
-
-	/** INIT Client **/
-
+	
 	/** CONNECT **/
 	rMessageHeader header;
 	header.id = REQUEST;
 	header.size = len;
 
-	iResult = sendto(clientSocket,
+	iResult = sendto(*(h->socket),
 		(char*)&header,
 		sizeof(rMessageHeader),
 		0,
-		(LPSOCKADDR)&serverAddress,
+		(LPSOCKADDR)(h->adresa),
 		sockAddrLen);
 
 	if (iResult == SOCKET_ERROR) {
 		printf("Sendto failed with error: %d\n", WSAGetLastError());
-		closesocket(clientSocket);
+		closesocket(*(h->socket));
 		WSACleanup();
 		return 1;
 	}
 
 	printf("Poslat zahtev za komunikaciju\n");
 
-	//RecvFrom Server - ocekuje se Accepted
 
-	iResult = recvfrom(clientSocket,
+	//RecvFrom Server - ocekuje se Accepted
+	iResult = recvfrom(*(h->socket),
 		(char*)&header,
 		sizeof(rMessageHeader),
 		0,
-		(LPSOCKADDR)&serverAddress,
+		(LPSOCKADDR)(h->adresa),
 		&sockAddrLen);
 
 	if (iResult == SOCKET_ERROR)
@@ -108,30 +64,6 @@ int Send(rSocket sock, char* data, int len)
 		h->state = DISCONNECTED;
 	}
 	/** CONNECT **/
-
-
-	// HOW TO SEND
-	/*char* tempbuffer;
-	tempbuffer = (char*)malloc(64 * 1024);
-
-	rMessageHeader* header;
-	header = (rMessageHeader*)tempbuffer;
-	header->id = 1;
-	header->size = h->cwnd;
-
-	rRead(&(h->buffer), tempbuffer + sizeof(rMessageHeader), h->cwnd);
-
-	iResult = sendto(
-	*(h->socket),
-	tempbuffer,
-	h->cwnd + sizeof(rMessageHeader),
-	0,
-	(LPSOCKADDR)h->adresa,
-	sizeof(struct sockaddr));
-*/
-
-	//getchar();
-
 
 
 	//thread1 petlja koja uzima iz data i stavlja u buffer
