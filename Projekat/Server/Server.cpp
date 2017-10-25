@@ -2,15 +2,9 @@
 #include "../Library/header.h"
 int main(int argc, char* argv[])
 {
-	// Server address
 	sockaddr_in serverAddress;
-	// Server's socket
 	int serverPort = SERVER_PORT;
-	// size of sockaddr structure
 	int sockAddrLen = sizeof(struct sockaddr);
-	// buffer we will use to receive client message
-	char accessBuffer[ACCESS_BUFFER_SIZE];
-	// variable used to store function return value
 	int iResult;
 
 	if (InitializeWindowsSockets() == false)
@@ -55,17 +49,19 @@ int main(int argc, char* argv[])
 	// Main server loop
 	while (1)
 	{
-		// clientAddress will be set from recvfrom
+		char* accessBuffer;
+		char* messageBuffer;
+		accessBuffer = (char*)malloc(ACCESS_BUFFER_SIZE);
+		memset(accessBuffer, 0, ACCESS_BUFFER_SIZE);
+
 		sockaddr_in clientAddress;
 		memset(&clientAddress, 0, sizeof(sockaddr_in));
-
-		// set whole buffer to zero
-		memset(accessBuffer, 0, ACCESS_BUFFER_SIZE);
+				
 
 		// receive client message
 		iResult = recvfrom(serverSocket,
 			accessBuffer,
-			sizeof(int),
+			2*sizeof(int),
 			0,
 			(LPSOCKADDR)&clientAddress,
 			&sockAddrLen);
@@ -76,43 +72,82 @@ int main(int argc, char* argv[])
 			continue;
 		}
 
-		int *poruka = (int*)accessBuffer;
-
 		char ipAddress[IP_ADDRESS_LEN];
-		// copy client ip to local char[]
 		strcpy_s(ipAddress, sizeof(ipAddress), inet_ntoa(clientAddress.sin_addr));
-		// convert port number from TCP/IP byte order to
-		// little endian byte order
 		int clientPort = ntohs((u_short)clientAddress.sin_port);
 
 		printf("Client connected from ip: %s, port: %d, sent: %s.\n", ipAddress, clientPort, accessBuffer);
 		
-		for (int i = 0; i < 4; i++)
-			printf("  %x  ", accessBuffer[i]);
+		/*for (int i = 0; i < 4; i++)
+			printf("  %x  ", accessBuffer[i]);*/
+		
+		if (*(int*)accessBuffer == REQUEST) {
+						
+			messageBuffer = (char*)malloc(*(int*)accessBuffer + 1);
 
+			if (messageBuffer != NULL)
+			{
+				//sendto "Accepted" Clinet
+				*(int*)accessBuffer = ACCEPTED;
+				iResult = sendto(serverSocket,
+					accessBuffer,
+					sizeof(int),
+					0,
+					(LPSOCKADDR)&clientAddress,
+					sockAddrLen);
 
-		if (*poruka == REQUEST) {
-
-			//sendto "Accepted" Clinet
-			*poruka = ACCEPTED;
-			iResult = sendto(serverSocket,
-				(char *)poruka,
-				sizeof(int),
-				0,
-				(LPSOCKADDR)&clientAddress,
-				sockAddrLen);
-
-			if (iResult == SOCKET_ERROR) {
-				printf("Sendto failed with error: %d\n", WSAGetLastError());
-				closesocket(serverSocket);
-				WSACleanup();
-				return 1;
+				if (iResult == SOCKET_ERROR) {
+					printf("Sendto failed with error: %d\n", WSAGetLastError());
+					closesocket(serverSocket);
+					WSACleanup();
+					return 1;
+				}
+				
+				printf("Server poslao Accepted\n");
 			}
+			else
+			{
+				//sendto "Rejected" Clinet
+				*(int*)accessBuffer = REJECTED;
+				iResult = sendto(serverSocket,
+					accessBuffer,
+					sizeof(int),
+					0,
+					(LPSOCKADDR)&clientAddress,
+					sockAddrLen);
 
+				if (iResult == SOCKET_ERROR) {
+					printf("Sendto failed with error: %d\n", WSAGetLastError());
+					closesocket(serverSocket);
+					WSACleanup();
+					return 1;
+				}
 
-			printf("Server poslao Accepted\n");
+				printf("Server poslao Rejected\n");
+			}
+		}
+
+		iResult = recvfrom(serverSocket,
+			accessBuffer,
+			ACCESS_BUFFER_SIZE,
+			0,
+			(LPSOCKADDR)&clientAddress,
+			&sockAddrLen);
+
+		if (iResult == SOCKET_ERROR)
+		{
+			printf("recvfrom failed with error: %d\n", WSAGetLastError());
+			continue;
 		}
 		
+		rMessageHeader* header;
+		char* message;
+		header = (rMessageHeader*)accessBuffer;
+		message = accessBuffer + sizeof(rMessageHeader);
+
+		for (int i = 0; i < header->size; i++)
+		printf("  %x  ", message[i]);
+
 		// possible message processing logic could be placed here
 	}
 
