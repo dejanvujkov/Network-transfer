@@ -1,6 +1,5 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
-//#define MAX_BUFFER_SIZE 10*1024*1024
-#define MAX_BUFFER_SIZE 1000
+#define MAX_BUFFER_SIZE 10*1024*1024
 
 #include "header.h"
 
@@ -136,7 +135,7 @@ int Send(rSocket sock, char* data, int len)
 
 
 	// HOW TO SEND
-	char* tempbuffer;
+	/*char* tempbuffer;
 	tempbuffer = (char*)malloc(64 * 1024);
 
 	rMessageHeader* header;
@@ -153,7 +152,7 @@ int Send(rSocket sock, char* data, int len)
 	0,
 	(LPSOCKADDR)h->adresa,
 	sizeof(struct sockaddr));
-
+*/
 
 	getchar();
 
@@ -264,25 +263,57 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 {
 	rHelper* h = (rHelper*)param;
 	int iResult;
-
+	int id = 0;
 	char* tempbuffer;
 	tempbuffer = (char*)malloc(64 * 1024);
 
+	rMessageHeader* header;
+	header = (rMessageHeader*)tempbuffer;
+
+	//ovde cemo primiti poruku
+	
+	int sockAddrLen = sizeof(struct sockaddr);
+
 	while (h->length - h->slider != 0 || h->buffer.taken > 0)
 	{
-		rRead(&(h->buffer), tempbuffer, h->cwnd);
+		header->id = ++id;
+		header->size = h->cwnd;
 
-		/*iResult = sendto(
+		rRead(&(h->buffer), tempbuffer + sizeof(rMessageHeader), h->cwnd);
+
+		iResult = sendto(
 			*(h->socket),
 			tempbuffer,
-			h->cwnd,
+			h->cwnd + sizeof(rMessageHeader),
 			0,
 			(LPSOCKADDR)h->adresa,
-			sizeof(struct sockaddr));*/
-		printf("\nSEND 100");
+			sizeof(struct sockaddr));
 
+		printf("\nSENT %d", header->size);
 
-		rDelete(&(h->buffer), 100);
+		iResult = recvfrom(*(h->socket),
+			tempbuffer,
+			sizeof(rMessageHeader),
+			0,
+			(LPSOCKADDR)&(*(h->adresa)),
+			&sockAddrLen);
+
+		if (iResult == SOCKET_ERROR)
+		{
+			printf("recvfrom failed with error: %d\n", WSAGetLastError());
+			return 1;
+		}
+
+		//ako je okej stigla poruka
+		if (header->state == RECIEVED) {
+
+			rDelete(&(h->buffer), header->size);
+		}
+		else {
+			continue;
+		}
+
+		
 		// unlock buffer
 		// unlock h
 
@@ -304,3 +335,6 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 
 	return 0;
 }
+
+
+
