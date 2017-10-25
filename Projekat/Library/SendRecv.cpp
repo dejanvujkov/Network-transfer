@@ -127,7 +127,37 @@ int Send(rSocket sock, char* data, int len)
 		printf("Connected to server");
 		h->state = CONNECTED;
 	}
+	else if (message[0] == REJECTED)
+	{
+		printf("Server rejected connection");
+		h->state = DISCONNECTED;
+	}
 	/** CONNECT **/
+
+
+	// HOW TO SEND
+	char* tempbuffer;
+	tempbuffer = (char*)malloc(64 * 1024);
+
+	rMessageHeader* header;
+	header = (rMessageHeader*)tempbuffer;
+	header->id = 1;
+	header->size = h->cwnd;
+
+	rRead(&(h->buffer), tempbuffer + sizeof(rMessageHeader), h->cwnd);
+
+	iResult = sendto(
+	*(h->socket),
+	tempbuffer,
+	h->cwnd + sizeof(rMessageHeader),
+	0,
+	(LPSOCKADDR)h->adresa,
+	sizeof(struct sockaddr));
+
+
+	getchar();
+
+
 
 	//thread1 petlja koja uzima iz data i stavlja u buffer
 	HANDLE thread1 = CreateThread(NULL, 0, &FromDataToBuffer, h, 0, NULL);
