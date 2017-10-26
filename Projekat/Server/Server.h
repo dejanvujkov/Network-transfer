@@ -9,6 +9,4 @@
 #define ACCESS_BUFFER_SIZE 64 * 1024
 #define IP_ADDRESS_LEN 16
 
-// Initializes WinSock2 library
-// Returns true if succeeded, false otherwise.
-bool InitializeWindowsSockets();
+int Close(int iResult, SOCKET serverSocket);

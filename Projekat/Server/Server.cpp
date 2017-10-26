@@ -1,11 +1,11 @@
-#include "Server.h"
-#include "../Library/header.h"
+#include "Inicijalizacija.h"
+
 int main(int argc, char* argv[])
 {
 	sockaddr_in serverAddress;
-	int serverPort = SERVER_PORT;
 	int sockAddrLen = sizeof(struct sockaddr);
 	int iResult;
+	SOCKET serverSocket;
 
 	if (InitializeWindowsSockets() == false)
 	{
@@ -16,22 +16,8 @@ int main(int argc, char* argv[])
 
 	// Initialize serverAddress structure used by bind
 	memset((char*)&serverAddress, 0, sizeof(serverAddress));
-	serverAddress.sin_family = AF_INET; /*set server address protocol family*/
-	serverAddress.sin_addr.s_addr = INADDR_ANY;
-	serverAddress.sin_port = htons(serverPort);
 
-	// create a socket
-	SOCKET serverSocket = socket(AF_INET,      // IPv4 address famly
-		SOCK_DGRAM,   // datagram socket
-		IPPROTO_UDP); // UDP
-
-					  // check if socket creation succeeded
-	if (serverSocket == INVALID_SOCKET)
-	{
-		printf("Creating socket failed with error: %d\n", WSAGetLastError());
-		WSACleanup();
-		return 1;
-	}
+	InitializeSocket(&serverSocket, &serverAddress);
 
 	// Bind port number and local address to socket
 	iResult = bind(serverSocket, (LPSOCKADDR)&serverAddress, sizeof(serverAddress));
@@ -170,17 +156,16 @@ int main(int argc, char* argv[])
 				printf("recvfrom failed with error: %d\n", WSAGetLastError());
 				continue;
 			}
-			/*for (int i = 0; i < header->size; i++)
-				printf("  %x  ", message[i]);*/
-
 		}
-		
-
-		// possible message processing logic could be placed here
 	}
 
-	// if we are here, it means that server is shutting down
-	// close socket and unintialize WinSock2 library
+	Close(iResult, serverSocket);
+
+	return 0;
+}
+
+int Close(int iResult, SOCKET serverSocket) {
+
 	iResult = closesocket(serverSocket);
 	if (iResult == SOCKET_ERROR)
 	{
@@ -196,17 +181,4 @@ int main(int argc, char* argv[])
 	}
 
 	printf("Server successfully shut down.\n");
-	return 0;
-}
-
-bool InitializeWindowsSockets()
-{
-	WSADATA wsaData;
-	// Initialize windows sockets library for this process
-	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
-	{
-		printf("WSAStartup failed with error: %d\n", WSAGetLastError());
-		return false;
-	}
-	return true;
 }
