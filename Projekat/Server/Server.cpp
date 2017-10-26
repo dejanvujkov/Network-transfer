@@ -136,6 +136,26 @@ int main(int argc, char* argv[])
 				printf("Server poslao Rejected\n");
 			}
 		}
+		else
+		{
+			//sendto "Rejected" Clinet
+			header->id = REJECTED;
+			iResult = sendto(serverSocket,
+				accessBuffer,
+				sizeof(int),
+				0,
+				(LPSOCKADDR)&clientAddress,
+				sockAddrLen);
+
+			if (iResult == SOCKET_ERROR) {
+				printf("Sendto failed with error: %d\n", WSAGetLastError());
+				closesocket(serverSocket);
+				WSACleanup();
+				return 1;
+			}
+
+			printf("Server poslao Rejected\n");
+		}
 
 		while (messageSize - slider != 0)
 		{
@@ -155,6 +175,8 @@ int main(int argc, char* argv[])
 			printf("\n[%d] Recieved %d ", header->id, header->size);
 			memcpy(message, messageBuffer, header->size);
 			slider += header->size;
+
+			printf("%d do sada", slider);
 
 			header->state = RECIEVED;
 

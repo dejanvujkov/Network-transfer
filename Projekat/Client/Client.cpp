@@ -3,7 +3,7 @@
 // UDP client that uses blocking sockets
 int main(int argc, char* argv[])
 {
-	int buffSize = 1000000000;
+	int buffSize = 1000000;
 	char* buffer;
 	buffer = (char*)malloc(buffSize);
 	memset(buffer, 77, buffSize);
@@ -19,8 +19,8 @@ int main(int argc, char* argv[])
 
 	SOCKET mySocket = INVALID_SOCKET;
 	mySocket = socket(AF_INET,
-		SOCK_STREAM,
-		IPPROTO_TCP);
+		SOCK_DGRAM,
+		IPPROTO_UDP);
 
 	sockaddr_in serverAddress;
 	memset((char*)&serverAddress, 0, sizeof(serverAddress));

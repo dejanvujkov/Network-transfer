@@ -1,12 +1,16 @@
 #pragma once
 #include "Connect.h"
 
-int Connect(SOCKET socket, SOCKADDR * adresa, int size)
+int Connect(SOCKET Socket, SOCKADDR * adresa, int size)
 {
+	sockaddr_in a = *(sockaddr_in*)adresa;
+
 	int iResult;
 	rMessageHeader buffer;
+	buffer.id = REQUEST;
+	buffer.size = 1000000;
 
-	iResult = sendto(socket, (char*)&buffer, sizeof(rMessageHeader), 0, adresa, size);
+	iResult = sendto(Socket, (char*)&buffer, sizeof(rMessageHeader), 0, adresa, size);
 
 	if (iResult == SOCKET_ERROR) {
 		printf("Sendto failed with error: %d\n", WSAGetLastError());
@@ -17,7 +21,7 @@ int Connect(SOCKET socket, SOCKADDR * adresa, int size)
 	printf("Poslat zahtev za komunikaciju\n");
 
 	//RecvFrom Server - ocekuje se Accepted
-	iResult = recvfrom(socket,
+	iResult = recvfrom(Socket,
 		(char*)&buffer,
 		sizeof(rMessageHeader),
 		0,

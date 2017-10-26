@@ -57,6 +57,9 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 	int brojPaketa;
 	int velicinaPoruke = MAX_UDP_SIZE - sizeof(rMessageHeader);
 
+	int trenutnoProcitano;
+	int procitano;
+
 	// Salje poruke dok ne posalje sve
 	WaitForSingleObject(h->lock, INFINITE);
 	while (h->length - h->slider != 0 || h->buffer.taken > 0)
@@ -65,17 +68,14 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 		brojPaketa = (h->cwnd) / velicinaPoruke;
 		h->recv = 0;
 
-
-		idPoslednjePrimljeno++;
-
-		if (idPoslednjePrimljeno == 16)
-			printf("");
+		procitano = 0;
 		
 		header = (rMessageHeader*)tempbuffer;
 
 		for (int i = 0; i <= brojPaketa; i++) 
 		{
 			// SLANJE		
+			Sleep(10);
 
 			header->id = ++idPoslednjePoslato;
 			
@@ -89,7 +89,25 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 					header->size = velicinaPoruke;
 			}
 
-			rRead(&(h->buffer), tempbuffer + sizeof(rMessageHeader), header->size);
+
+			trenutnoProcitano = rRead(&(h->buffer), tempbuffer + sizeof(rMessageHeader), header->size);
+
+			if (trenutnoProcitano > h->buffer.taken - procitano)
+			{
+				header->size = h->buffer.taken - procitano;
+				brojPaketa = i;
+			}
+			procitano += trenutnoProcitano;
+			// treba read + read +read +read 
+			// if allRead > buff->taken
+			// uzmi razliku, da ne cita vise nego sto treba
+
+			if (trenutnoProcitano < header->size)
+			{
+				header->size = trenutnoProcitano;
+				brojPaketa = i;
+			}
+
 
 			iResult = sendto(
 				*(h->socket),
@@ -148,7 +166,7 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 		}
 		Algoritam(h);
 		printf("\n%d Poslato", h->recv);
-		printf("\m%d CWND", h->cwnd);
+		printf("\n%d CWND", h->cwnd);
 		Sleep(10);
 
 	}
