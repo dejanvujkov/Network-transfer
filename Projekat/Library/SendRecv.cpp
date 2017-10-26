@@ -11,11 +11,6 @@ int Send(rSocket sock, char* data, int len)
 
 	Inicijalizuj(h, &sock, data, len);
 
-	if ((iResult = KonektujSe(h, len)) == -1) {
-		
-		printf("Doslo je do greske prilikom konektovanja na server\n");
-		return -1;
-	}
 
 	//thread1 petlja koja uzima iz data i stavlja u buffer
 	HANDLE thread1 = CreateThread(NULL, 0, &FromDataToBuffer, h, 0, NULL);
@@ -28,6 +23,25 @@ int Send(rSocket sock, char* data, int len)
 
 	rFreeBuffer(&(h->buffer));
 	free(h);
+
+	return 0;
+}
+
+int Send2(SOCKET socket, char * buffer, int size, int flag, sockaddr * adresa, int tolen)
+{
+	rHelper h;
+
+	Initialize(&h, &socket, buffer, size, adresa, tolen);
+
+	//thread1 petlja koja uzima iz data i stavlja u buffer
+	HANDLE thread1 = CreateThread(NULL, 0, &FromDataToBuffer, &h, 0, NULL);
+
+	//thread2 petlja koja uzima iz buffer i salje preko mreze
+	HANDLE thread2 = CreateThread(NULL, 0, &SendDataFromBuffer, &h, 0, NULL);
+
+	getchar();
+
+	rFreeBuffer(&(h.buffer));
 
 	return 0;
 }

@@ -3,9 +3,10 @@
 // UDP client that uses blocking sockets
 int main(int argc, char* argv[])
 {
+	int buffSize = 1000000000;
 	char* buffer;
-	buffer = (char*)malloc(1000000000);
-	memset(buffer, 77, 1000000000);
+	buffer = (char*)malloc(buffSize);
+	memset(buffer, 77, buffSize);
 
 	WSADATA wsaData;
 	int iResult = 0;
@@ -16,11 +17,30 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	rSocket socket;
+	SOCKET mySocket = INVALID_SOCKET;
+	mySocket = socket(AF_INET,
+		SOCK_STREAM,
+		IPPROTO_TCP);
+
+	sockaddr_in serverAddress;
+	memset((char*)&serverAddress, 0, sizeof(serverAddress));
+	serverAddress.sin_family = AF_INET;
+	serverAddress.sin_addr.s_addr = inet_addr(SERVER_IP_ADDERESS);
+	serverAddress.sin_port = htons((u_short)SERVER_PORT);
+
+	int sockAddrLen = sizeof(struct sockaddr);
+
+	//CONNECT
+	iResult = Connect(mySocket, (SOCKADDR*)&serverAddress, sizeof(serverAddress));
+
+	//SEND
+	iResult = Send2(mySocket, buffer, buffSize, 0, (SOCKADDR*)&serverAddress, sockAddrLen);
+
+	/*rSocket socket;
 	socket.addr = SERVER_IP_ADDERESS;
 	socket.port = SERVER_PORT;
 
-	iResult = Send(socket, buffer, 1000000000);
+	iResult = Send(socket, buffer, buffSize);*/
 
 	if (iResult == -1) {
 

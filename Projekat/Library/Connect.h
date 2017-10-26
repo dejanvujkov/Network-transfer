@@ -1,4 +1,4 @@
 #pragma once
 #include "header.h"
 
-int KonektujSe(rHelper* h, int len);
+int Connect(SOCKET socket, SOCKADDR* adresa, int size);

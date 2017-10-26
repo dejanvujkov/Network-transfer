@@ -1,37 +1,28 @@
 #pragma once
 #include "Connect.h"
 
-int KonektujSe(rHelper *h, int len) {
-
-	rMessageHeader header;
-	header.id = REQUEST;
-	header.size = len;
-
+int Connect(SOCKET socket, SOCKADDR * adresa, int size)
+{
 	int iResult;
+	rMessageHeader buffer;
 
-	iResult = sendto(*(h->socket),
-		(char*)&header,
-		sizeof(rMessageHeader),
-		0,
-		(LPSOCKADDR)(h->adresa),
-		h->sockAddrLen);
+	iResult = sendto(socket, (char*)&buffer, sizeof(rMessageHeader), 0, adresa, size);
 
 	if (iResult == SOCKET_ERROR) {
 		printf("Sendto failed with error: %d\n", WSAGetLastError());
-		closesocket(*(h->socket));
 		WSACleanup();
-		return 1;
+		return -1;
 	}
 
 	printf("Poslat zahtev za komunikaciju\n");
 
 	//RecvFrom Server - ocekuje se Accepted
-	iResult = recvfrom(*(h->socket),
-		(char*)&header,
+	iResult = recvfrom(socket,
+		(char*)&buffer,
 		sizeof(rMessageHeader),
 		0,
-		(LPSOCKADDR)(h->adresa),
-		&h->sockAddrLen);
+		adresa,
+		&size);
 
 	if (iResult == SOCKET_ERROR)
 	{
@@ -39,16 +30,19 @@ int KonektujSe(rHelper *h, int len) {
 		return -1;
 	}
 
-	if (header.id == ACCEPTED) {
+	if (buffer.id == ACCEPTED) {
 
 		printf("Connected to server");
-		h->state = CONNECTED;
+		return 0;
 	}
-	else if (header.id == REJECTED)
+	else if (buffer.id == REJECTED)
 	{
 		printf("Server rejected connection");
-		h->state = DISCONNECTED;
+		return -1;
 	}
-
-	return 0;
+	else
+	{
+		printf("UNKNOWN ERROR");
+		return -1;
+	}
 }
