@@ -75,19 +75,10 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 
 		for (int i = 0; i <= brojPaketa; i++) 
 		{
-			// SLANJE		
-
+			//Sleep(20);
+			// SLANJE			
 			header->id = ++idPoslednjePoslato;
-			
-			if (brojPaketa == 0)
-				header->size = h->cwnd % velicinaPoruke;
-			else
-			{
-				if (i == brojPaketa)
-					header->size = h->cwnd % velicinaPoruke;
-				else
-					header->size = velicinaPoruke;
-			}
+			header->size = (i != brojPaketa && brojPaketa != 0) ? velicinaPoruke : (h->cwnd % velicinaPoruke);
 
 			rRead(&(h->buffer), tempbuffer + sizeof(rMessageHeader), header->size);
 
@@ -148,7 +139,7 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 		}
 		Algoritam(h);
 		printf("\n%d Poslato", h->recv);
-		printf("\m%d CWND", h->cwnd);
+		printf("\n%d CWND", h->cwnd);
 		Sleep(10);
 
 	}
