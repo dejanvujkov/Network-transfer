@@ -93,66 +93,55 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 		// Ako je poruka dostavljena, brise se iz buffera
 		if (header->state == RECIEVED) 
 		{
+			h->recv += header->size;
 			rDelete(&(h->buffer), header->size);
-			//ALGORITAM
+			Algoritam(h);
 		}
 		// Ako nije dostavljena ponovo se salje, bez pomeranja buffera
 		else 
 		{
 			continue;
 		}
-
-		ReleaseSemaphore(h->lock, 1, NULL);
-		// ALGORITAM OVDE
-		WaitForSingleObject(h->lock, INFINITE);
 	}
+
 	ReleaseSemaphore(h->lock, 1, NULL);
 
 	free(tempbuffer);
 
-	return 0;
+	return h->slider;
 }
 
 int Algoritam(rHelper* h)
 {
-	// Ako je u slow start modu, uvecavaj eksponencionalno
-	if (h->slowstart)
+	// Ako je primljeno manje nego poslato
+	if (h->recv < h->cwnd)
 	{
-		// Ako je primljeno manje nego sto je poslato, preci u Tahoe mod i ponovo poslati iste pakete
-		if (h->cwnd < h->recv)
+		// Ako je u slowstart modu
+		if (h->slowstart)
 		{
+			// postavlja se ssthresh i cwnd = ssthresh
 			h->ssthresh = h->cwnd / 2;
 			h->cwnd = h->ssthresh;
 			h->slowstart = false;
-			//continue;
 		}
-		// Ako nema problema, povecati cwnd 2x
+		// Ako je u Tahoe modu
 		else
 		{
-			h->cwnd = h->cwnd * 2;
+			// swnd se vraca na ssthresh
+			h->cwnd = h->ssthresh;
 		}
 	}
-	// Ako je u Tahoe modu, povecavati cwnd za 1 u svakoj iteraciji
+	// Ako je primljeno isto kao poslato
 	else
 	{
-		// Ako je primljeno manje nego sto je poslato, postaviti cwnd na ssthresh i poslati ponovo
-		if (h->cwnd < h->recv)
-		{
-			h->cwnd = h->ssthresh;
-			//continue;
-		}
-		// Ako nema problema, povecati cwnd za 1
+		// Slowstart -> cwnd * 2
+		if (h->slowstart)
+			h->cwnd *= 2;
+		// Tahoe -> cwnd + 1
 		else
-		{
-			h->cwnd = h->cwnd + 1;
-		}
+			h->cwnd += 1;
 	}
-
-	/** SLIDER **/
-	h->slider = h->slider + h->recv;
-
-
-
+	
 	return 0;
 }
 

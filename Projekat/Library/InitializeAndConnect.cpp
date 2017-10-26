@@ -8,7 +8,7 @@ void Inicijalizuj(rHelper *h, rSocket *sock, char* data, int len) {
 	h->slider = 0;
 	h->state = DISCONNECTED;
 
-	h->cwnd = 64000;			// Inicijalno 10
+	h->cwnd = 10;			// Inicijalno 10
 	h->ssthresh = 0;
 	h->recv = 100000;			// Inicijalno mora biti veci od cwnd
 	h->slowstart = true;
