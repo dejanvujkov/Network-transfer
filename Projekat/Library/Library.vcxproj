@@ -134,15 +134,17 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Connect.h" />
     <ClInclude Include="enums.h" />
     <ClInclude Include="header.h" />
-    <ClInclude Include="InitializeAndConnect.h" />
+    <ClInclude Include="Initialize.h" />
     <ClInclude Include="KruzniBuffer.h" />
     <ClInclude Include="structs.h" />
     <ClInclude Include="ThreadHeaders.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="InitializeAndConnect.cpp" />
+    <ClCompile Include="Connect.cpp" />
+    <ClCompile Include="Initialize.cpp" />
     <ClCompile Include="KruzniBuffer.cpp" />
     <ClCompile Include="SendRecv.cpp" />
     <ClCompile Include="ThreadFunctions.cpp" />

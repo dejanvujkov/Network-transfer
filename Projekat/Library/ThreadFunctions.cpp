@@ -45,7 +45,7 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 	int iResult;
 	int id = 0;
 	char* tempbuffer;
-	tempbuffer = (char*)malloc(64 * 1024);
+	tempbuffer = (char*)malloc(MAX_UDP_SIZE);
 
 	rMessageHeader* header;
 	header = (rMessageHeader*)tempbuffer;

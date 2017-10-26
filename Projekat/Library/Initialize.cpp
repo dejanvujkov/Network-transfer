@@ -1,4 +1,4 @@
-#include "InitializeAndConnect.h"
+#include "Initialize.h"
 
 void Inicijalizuj(rHelper *h, rSocket *sock, char* data, int len) {
 

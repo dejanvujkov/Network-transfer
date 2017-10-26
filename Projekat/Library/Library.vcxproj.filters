@@ -33,7 +33,10 @@
     <ClInclude Include="ThreadHeaders.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="InitializeAndConnect.h">
+    <ClInclude Include="Initialize.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Connect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -47,7 +50,10 @@
     <ClCompile Include="ThreadFunctions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="InitializeAndConnect.cpp">
+    <ClCompile Include="Initialize.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Connect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

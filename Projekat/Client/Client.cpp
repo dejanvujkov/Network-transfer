@@ -20,7 +20,13 @@ int main(int argc, char* argv[])
 	socket.addr = SERVER_IP_ADDERESS;
 	socket.port = SERVER_PORT;
 
-	Send(socket, buffer, 100000000);
+	iResult = Send(socket, buffer, 100000000);
+
+	if (iResult == -1) {
+
+		printf("Doslo je do greske prilikom slanja paketa");
+		return -1;
+	}
 
 	iResult = WSACleanup();
 	if (iResult == SOCKET_ERROR)

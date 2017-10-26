@@ -1,10 +1,7 @@
-
-
 #include "header.h"
 
 int Send(rSocket sock, char* data, int len)
 {
-
 	/** INICIJALIZACIJA **/
 
 	rHelper* h;
@@ -16,55 +13,11 @@ int Send(rSocket sock, char* data, int len)
 
 	Inicijalizuj(h, &sock, data, len);
 
-	
-	/** CONNECT **/
-	rMessageHeader header;
-	header.id = REQUEST;
-	header.size = len;
-
-	iResult = sendto(*(h->socket),
-		(char*)&header,
-		sizeof(rMessageHeader),
-		0,
-		(LPSOCKADDR)(h->adresa),
-		sockAddrLen);
-
-	if (iResult == SOCKET_ERROR) {
-		printf("Sendto failed with error: %d\n", WSAGetLastError());
-		closesocket(*(h->socket));
-		WSACleanup();
-		return 1;
+	if ((iResult = KonektujSe(h, len)) == -1) {
+		
+		printf("Doslo je do greske prilikom konektovanja na server\n");
+		return -1;
 	}
-
-	printf("Poslat zahtev za komunikaciju\n");
-
-
-	//RecvFrom Server - ocekuje se Accepted
-	iResult = recvfrom(*(h->socket),
-		(char*)&header,
-		sizeof(rMessageHeader),
-		0,
-		(LPSOCKADDR)(h->adresa),
-		&sockAddrLen);
-
-	if (iResult == SOCKET_ERROR)
-	{
-		printf("recvfrom failed with error: %d\n", WSAGetLastError());
-		return 1;
-	}
-
-	if (header.id == ACCEPTED) {
-
-		printf("Connected to server");
-		h->state = CONNECTED;
-	}
-	else if (header.id == REJECTED)
-	{
-		printf("Server rejected connection");
-		h->state = DISCONNECTED;
-	}
-	/** CONNECT **/
-
 
 	//thread1 petlja koja uzima iz data i stavlja u buffer
 	HANDLE thread1 = CreateThread(NULL, 0, &FromDataToBuffer, h, 0, NULL);
@@ -75,17 +28,8 @@ int Send(rSocket sock, char* data, int len)
 
 	getchar();
 
-
-	//t2
-
-	// while end
-
 	rFreeBuffer(&(h->buffer));
 	free(h);
 
 	return 0;
 }
-
-
-
-
