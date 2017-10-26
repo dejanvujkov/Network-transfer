@@ -1,5 +1,6 @@
 #include "header.h"
 
+// Inicijalizacija kruznog buffera
 void rInitBuffer(Kruzni_Buffer * buffer, int size)
 {
 	buffer->buffer_start = (char*)malloc(size);
@@ -12,6 +13,7 @@ void rInitBuffer(Kruzni_Buffer * buffer, int size)
 	buffer->taken = 0;
 }
 
+// Oslobadjanje buffera
 void rFreeBuffer(Kruzni_Buffer * buffer)
 {
 	free(buffer->buffer_start);
@@ -19,6 +21,10 @@ void rFreeBuffer(Kruzni_Buffer * buffer)
 
 int rPush(Kruzni_Buffer * buffer, char * data, int size)
 {
+	// Ako ne moze da stane vrati gresku
+	if (size > buffer->free)
+		return -1;
+
 	// Velicina podataka koja se dodaje u buffer
 	int tempSize;
 	if (size <= buffer->free)
@@ -26,13 +32,14 @@ int rPush(Kruzni_Buffer * buffer, char * data, int size)
 	else
 		tempSize = buffer->free;
 
-	// Ako ima prelamanje buffera
+	// Ako nema prelamanja podataka samo se kopira
 	if ((buffer->buffer_end - buffer->head) >= tempSize)
 	{
 		memcpy(buffer->head, data, tempSize);
 
 		buffer->head += tempSize;
 	}
+	// Ako ima prelamanja, podaci se dele na pocetak i kraj
 	else
 	{
 		int temp = buffer->buffer_end - buffer->head;
@@ -51,7 +58,7 @@ int rPush(Kruzni_Buffer * buffer, char * data, int size)
 
 int rPop(Kruzni_Buffer * buffer, char * data, int size)
 {
-	// Velicina podataka koja se uzima
+	// Maksimalna velicina podataka koja se uzima
 	int tempSize;
 	if (size <= buffer->taken)			// Ako se trazi bar onoliko koliko ima / 100 : 200 -> 100
 		tempSize = size;
@@ -70,7 +77,6 @@ int rPop(Kruzni_Buffer * buffer, char * data, int size)
 		memcpy(data, buffer->tail, temp);
 		memcpy(data + temp, buffer->buffer_start, tempSize - temp);
 		buffer->tail = buffer->buffer_start + (tempSize - temp);
-
 	}
 
 	buffer->free += tempSize;
@@ -81,7 +87,7 @@ int rPop(Kruzni_Buffer * buffer, char * data, int size)
 
 int rRead(Kruzni_Buffer * buffer, char * data, int size)
 {
-	// Velicina podataka koja se uzima
+	// Maksimalna velicina podataka koja se uzima
 	int tempSize;
 	if (size <= buffer->taken)			// Ako se trazi bar onoliko koliko ima / 100 : 200 -> 100
 		tempSize = size;
@@ -92,7 +98,6 @@ int rRead(Kruzni_Buffer * buffer, char * data, int size)
 	if ((buffer->buffer_end - buffer->tail) >= tempSize)
 	{
 		memcpy(data, buffer->tail, tempSize);
-
 	}
 	else
 	{
@@ -100,7 +105,6 @@ int rRead(Kruzni_Buffer * buffer, char * data, int size)
 
 		memcpy(data, buffer->tail, temp);
 		memcpy(data + temp, buffer->buffer_start, tempSize - temp);
-
 	}
 
 	return tempSize;
@@ -108,7 +112,7 @@ int rRead(Kruzni_Buffer * buffer, char * data, int size)
 
 int rDelete(Kruzni_Buffer * buffer, int size)
 {
-	// Velicina podataka koja se uzima
+	// Maksimalna velicina podataka koja se brise
 	int tempSize;
 	if (size <= buffer->taken)			// Ako se trazi bar onoliko koliko ima / 100 : 200 -> 100
 		tempSize = size;
@@ -119,13 +123,11 @@ int rDelete(Kruzni_Buffer * buffer, int size)
 	if ((buffer->buffer_end - buffer->tail) >= tempSize)
 	{
 		buffer->tail += tempSize;
-
 	}
 	else
 	{
 		int temp = buffer->buffer_end - buffer->tail;
 		buffer->tail = buffer->buffer_start + (tempSize - temp);
-
 	}
 
 	buffer->free += tempSize;
