@@ -12,6 +12,8 @@ void Inicijalizuj(rHelper *h, rSocket *sock, char* data, int len) {
 	h->ssthresh = 0;
 	h->recv = 100000;			// Inicijalno mora biti veci od cwnd
 	h->slowstart = true;
+
+	h->sockAddrLen = sizeof(struct sockaddr);
 	
 	sockaddr_in* serverAddress;
 	serverAddress = (sockaddr_in*)malloc(sizeof(sockaddr_in)); /*CURENJE MEMORIJE*/

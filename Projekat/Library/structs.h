@@ -18,6 +18,7 @@ typedef struct rHelper {
 	int ssthresh;
 	int recv;
 	bool slowstart;
+	int sockAddrLen;
 	rConnectionState state;
 	Kruzni_Buffer buffer;
 	HANDLE lock;

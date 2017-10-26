@@ -52,8 +52,6 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 
 	//ovde cemo primiti poruku
 
-	int sockAddrLen = sizeof(struct sockaddr);
-
 	WaitForSingleObject(h->lock, INFINITE);
 	while (h->length - h->slider != 0 || h->buffer.taken > 0)
 	{
@@ -80,7 +78,7 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 			sizeof(rMessageHeader),
 			0,
 			(LPSOCKADDR)&(*(h->adresa)),
-			&sockAddrLen);
+			&h->sockAddrLen);
 
 		if (iResult == SOCKET_ERROR)
 		{

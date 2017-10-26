@@ -7,7 +7,6 @@ int KonektujSe(rHelper *h, int len) {
 	header.id = REQUEST;
 	header.size = len;
 
-	int sockAddrLen = sizeof(struct sockaddr);
 	int iResult;
 
 	iResult = sendto(*(h->socket),
@@ -15,7 +14,7 @@ int KonektujSe(rHelper *h, int len) {
 		sizeof(rMessageHeader),
 		0,
 		(LPSOCKADDR)(h->adresa),
-		sockAddrLen);
+		h->sockAddrLen);
 
 	if (iResult == SOCKET_ERROR) {
 		printf("Sendto failed with error: %d\n", WSAGetLastError());
@@ -32,7 +31,7 @@ int KonektujSe(rHelper *h, int len) {
 		sizeof(rMessageHeader),
 		0,
 		(LPSOCKADDR)(h->adresa),
-		&sockAddrLen);
+		&h->sockAddrLen);
 
 	if (iResult == SOCKET_ERROR)
 	{

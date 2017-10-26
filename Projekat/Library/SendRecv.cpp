@@ -6,8 +6,6 @@ int Send(rSocket sock, char* data, int len)
 
 	rHelper* h;
 	h = (rHelper*)malloc(sizeof(rHelper));
-
-	int sockAddrLen = sizeof(struct sockaddr);
 	
 	int iResult = 0;
 
