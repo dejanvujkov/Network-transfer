@@ -36,7 +36,7 @@ int Connect(SOCKET Socket, SOCKADDR * adresa, int size)
 
 	if (buffer.id == ACCEPTED) {
 
-		printf("Connected to server");
+		printf("Connected to server\n");
 		return 0;
 	}
 	else if (buffer.id == REJECTED)

@@ -16,6 +16,6 @@
 #include "Connect.h"
 #include "structs.h"
 
-int Send(rSocket socket, char* data, int len);
+//int Send(rSocket socket, char* data, int len);
 int Send2(SOCKET socket, char* buffer, int size, int flag, sockaddr* adresa, int tolen);
 int Recv(char* buffer, int len, SOCKET* socket, LPSOCKADDR* clientaddress, int addrLen);
