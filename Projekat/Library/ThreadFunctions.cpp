@@ -1,5 +1,9 @@
 #include "header.h"
 
+int SendOneMessage(rMessageHeader* header, int* idPoslednjePoslato, int* brojPaketa, int i, int velicinaPoruke, rHelper* h, int* trenutnoProcitano, int* procitano, char* tempbuffer);
+int RecvOneMessage(rHelper* h, char* tempbuffer, int i);
+int SlideOneMessage(rMessageHeader* header, char* tempbuffer, int i, rHelper* h);
+
 DWORD WINAPI FromDataToBuffer(LPVOID param)
 {
 	rHelper* h = (rHelper*)param;
@@ -47,12 +51,9 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 	tempbuffer = (char*)malloc(MAX_UDP_SIZE);
 
 	rMessageHeader* header;
-	//header = (rMessageHeader*)tempbuffer;
 
 	int idPoslednjePoslato = 0;
 	int idPoslednjePrimljeno = 0;
-
-	int iResult;
 
 	int brojPaketa;
 	int velicinaPoruke = MAX_UDP_SIZE - sizeof(rMessageHeader);
@@ -74,101 +75,32 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 
 		for (int i = 0; i <= brojPaketa; i++) 
 		{
-			// SLANJE		
-			Sleep(10);
-
-			header->id = ++idPoslednjePoslato;
-			
-			if (brojPaketa == 0)
-				header->size = h->cwnd % velicinaPoruke;
-			else
-			{
-				if (i == brojPaketa)
-					header->size = h->cwnd % velicinaPoruke;
-				else
-					header->size = velicinaPoruke;
-			}
-
-
-			trenutnoProcitano = rRead(&(h->buffer), tempbuffer + sizeof(rMessageHeader), header->size);
-
-			if (trenutnoProcitano > h->buffer.taken - procitano)
-			{
-				header->size = h->buffer.taken - procitano;
-				brojPaketa = i;
-			}
-			procitano += trenutnoProcitano;
-			// treba read + read +read +read 
-			// if allRead > buff->taken
-			// uzmi razliku, da ne cita vise nego sto treba
-
-			if (trenutnoProcitano < header->size)
-			{
-				header->size = trenutnoProcitano;
-				brojPaketa = i;
-			}
-
-
-			iResult = sendto(
-				*(h->socket),
-				tempbuffer,
-				header->size + sizeof(rMessageHeader),
-				0,
-				(LPSOCKADDR)h->adresa,
-				sizeof(struct sockaddr));
-
-			if (iResult == SOCKET_ERROR)
-			{
-				printf("recvfrom failed with error: %d\n", WSAGetLastError());
-				return 1;
-			}
-
-			//printf("\n[%d] [%d] Sent %d ", idPoslednjePrimljeno, header->id, header->size);
+			// SLANJE	
+			SendOneMessage(header, &idPoslednjePoslato, &brojPaketa, i, velicinaPoruke, h, &trenutnoProcitano, &procitano, tempbuffer);
 		}
 
 		ReleaseSemaphore(h->lock, 1, NULL);
+
 		for (int i = 0; i <= brojPaketa; i++)
 		{
 			// PRIMANJE
-			iResult = recvfrom(*(h->socket),
-				tempbuffer + i * sizeof(rMessageHeader),
-				sizeof(rMessageHeader),
-				0,
-				(LPSOCKADDR)&(*(h->adresa)),
-				&h->sockAddrLen);
-
-			if (iResult == SOCKET_ERROR)
-			{
-				printf("recvfrom failed with error: %d\n", WSAGetLastError());
-				return 1;
-			}
+			RecvOneMessage(h, tempbuffer, i);			
 		}
 
 		WaitForSingleObject(h->lock, INFINITE);
+
 		for (int i = 0; i <= brojPaketa; i++)
 		{
-			// SLIDER!!		
-
-			header = (rMessageHeader*)(tempbuffer + i * sizeof(rMessageHeader));
-
-			// Ako je poruka dostavljena, brise se iz buffera
-			if (header->state == RECIEVED)
-			{
-				h->recv += header->size;
-				rDelete(&(h->buffer), header->size);
-				
-			}
-			// Ako nije dostavljena ponovo se salje, bez pomeranja buffera
-			else
-			{
-				//continue;
-			}
+			// KLIZAJUCI PROZOR		
+			SlideOneMessage(header, tempbuffer, i, h);
 		}
+
 		Algoritam(h);
+
 		printf("\n%d Poslato", h->recv);
 		printf("\n%d CWND", h->cwnd);
-		Sleep(10);
 
+		Sleep(10);
 	}
 
 	ReleaseSemaphore(h->lock, 1, NULL);
@@ -212,3 +144,77 @@ int Algoritam(rHelper* h)
 	return 0;
 }
 
+int SendOneMessage(rMessageHeader* header, int* idPoslednjePoslato, int* brojPaketa, int i, int velicinaPoruke, rHelper* h, int* trenutnoProcitano, int* procitano, char* tempbuffer)
+{
+	int iResult;
+	Sleep(10);
+
+	header->id = ++(*idPoslednjePoslato);
+
+	// Koliko bajtova moze da stane u poruku
+	header->size = (*brojPaketa != i && *brojPaketa != 0) ? velicinaPoruke : (h->cwnd % velicinaPoruke);
+
+	// Koliko je zapravo procitano
+	*trenutnoProcitano = rRead(&(h->buffer), tempbuffer + sizeof(rMessageHeader), header->size);
+
+	// Ako je procitano vise nego sto moze
+	if (*trenutnoProcitano > h->buffer.taken - *procitano)
+	{
+		header->size = h->buffer.taken - *procitano;
+		*brojPaketa = i;
+	}
+
+	*procitano += *trenutnoProcitano;
+
+	iResult = sendto(
+		*(h->socket),
+		tempbuffer,
+		header->size + sizeof(rMessageHeader),
+		0,
+		(LPSOCKADDR)h->adresa,
+		sizeof(struct sockaddr));
+
+	if (iResult == SOCKET_ERROR)
+	{
+		printf("recvfrom failed with error: %d\n", WSAGetLastError());
+		return -1;
+	}
+
+	return 0;
+}
+
+int RecvOneMessage(rHelper* h, char* tempbuffer, int i)
+{
+	int iResult;
+
+	iResult = recvfrom(
+		*(h->socket),
+		tempbuffer + i * sizeof(rMessageHeader),
+		sizeof(rMessageHeader),
+		0,
+		(LPSOCKADDR)&(*(h->adresa)),
+		&h->sockAddrLen
+	);
+
+	if (iResult == SOCKET_ERROR)
+	{
+		printf("recvfrom failed with error: %d\n", WSAGetLastError());
+		return 1;
+	}
+
+	return 0;
+}
+
+int SlideOneMessage(rMessageHeader* header, char* tempbuffer, int i, rHelper* h)
+{
+	header = (rMessageHeader*)(tempbuffer + i * sizeof(rMessageHeader));
+
+	// Ako je poruka dostavljena, brise se iz buffera
+	if (header->state == RECIEVED)
+	{
+		h->recv += header->size;
+		rDelete(&(h->buffer), header->size);
+	}
+
+	return 0;
+}
