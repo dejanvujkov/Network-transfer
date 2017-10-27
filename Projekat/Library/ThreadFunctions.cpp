@@ -97,8 +97,7 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 
 		Algoritam(h);
 
-		printf("\n%d Poslato", h->recv);
-		printf("\n%d CWND", h->cwnd);
+		printf("[%d]\tB:%d\tCWND:%d\t\n", header->id, header->size, h->cwnd);
 
 		Sleep(10);
 	}
