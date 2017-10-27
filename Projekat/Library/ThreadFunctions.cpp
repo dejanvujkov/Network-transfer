@@ -6,6 +6,7 @@ DWORD WINAPI FromDataToBuffer(LPVOID param)
 	int s = 0;
 	int tempSize;
 	WaitForSingleObject(h->lock, INFINITE);
+
 	// Stavlja podatke na buffer dok ne dodje do kraja
 	while (h->length - h->slider != 0)
 	{
@@ -47,21 +48,21 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 	tempbuffer = (char*)malloc(MAX_UDP_SIZE);
 
 	rMessageHeader* header;
-	//header = (rMessageHeader*)tempbuffer;
 
 	int idPoslednjePoslato = 0;
 	int idPoslednjePrimljeno = 0;
 
 	int iResult;
 
-	int brojPaketa;
+	int brojPaketa;				//koliko paketa se mora poslati da bi se isporucila cela poruka
 	int velicinaPoruke = MAX_UDP_SIZE - sizeof(rMessageHeader);
 
-	int trenutnoProcitano;
-	int procitano;
+	int trenutnoProcitano;		//koliko moze da bude procitano iz bafera
+	int procitano;				//koliko je procitano iz bafera/poslato
 
 	// Salje poruke dok ne posalje sve
 	WaitForSingleObject(h->lock, INFINITE);
+
 	while (h->length - h->slider != 0 || h->buffer.taken > 0)
 	{
 		// Na koliko paketa se rastavlja poruka
@@ -98,9 +99,6 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 				brojPaketa = i;
 			}
 			procitano += trenutnoProcitano;
-			// treba read + read +read +read 
-			// if allRead > buff->taken
-			// uzmi razliku, da ne cita vise nego sto treba
 
 			if (trenutnoProcitano < header->size)
 			{
@@ -122,11 +120,10 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 				printf("recvfrom failed with error: %d\n", WSAGetLastError());
 				return 1;
 			}
-
-			//printf("\n[%d] [%d] Sent %d ", idPoslednjePrimljeno, header->id, header->size);
 		}
-
+		
 		ReleaseSemaphore(h->lock, 1, NULL);
+
 		for (int i = 0; i <= brojPaketa; i++)
 		{
 			// PRIMANJE
@@ -145,6 +142,8 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 		}
 
 		WaitForSingleObject(h->lock, INFINITE);
+
+		//Provera da li je svaki header primljen 
 		for (int i = 0; i <= brojPaketa; i++)
 		{
 			// SLIDER!!		
@@ -165,10 +164,8 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 			}
 		}
 		Algoritam(h);
-		printf("\n%d Poslato", h->recv);
-		printf("\n%d CWND", h->cwnd);
+		printf("[%d]\tB:%d\tCWND:%d\t\n", header->id, header->size, h->cwnd);
 		Sleep(10);
-
 	}
 
 	ReleaseSemaphore(h->lock, 1, NULL);

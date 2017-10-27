@@ -67,11 +67,8 @@ int main(int argc, char* argv[])
 		strcpy_s(ipAddress, sizeof(ipAddress), inet_ntoa(clientAddress.sin_addr));
 		int clientPort = ntohs((u_short)clientAddress.sin_port);
 
-		printf("Client connected from ip: %s, port: %d, sent: %s.\n", ipAddress, clientPort, accessBuffer);
+		printf("Client connected from ip: %s, port: %d\n", ipAddress, clientPort);
 		
-		/*for (int i = 0; i < 4; i++)
-			printf("  %x  ", accessBuffer[i]);*/
-
 		header = (rMessageHeader*)accessBuffer;
 		message = accessBuffer + sizeof(rMessageHeader);
 		messageSize = header->size;
@@ -85,12 +82,7 @@ int main(int argc, char* argv[])
 				//sendto "Accepted" Clinet
 				header->id = ACCEPTED;
 
-				iResult = sendto(serverSocket,
-					accessBuffer,
-					sizeof(rMessageHeader),
-					0,
-					(LPSOCKADDR)&clientAddress,
-					sockAddrLen);
+				iResult = sendto(serverSocket, accessBuffer, sizeof(rMessageHeader), 0, (LPSOCKADDR)&clientAddress, sockAddrLen);
 
 				if (iResult == SOCKET_ERROR) {
 					printf("Sendto failed with error: %d\n", WSAGetLastError());
@@ -105,12 +97,8 @@ int main(int argc, char* argv[])
 			{
 				//sendto "Rejected" Clinet
 				header->id = REJECTED;
-				iResult = sendto(serverSocket,
-					accessBuffer,
-					sizeof(int),
-					0,
-					(LPSOCKADDR)&clientAddress,
-					sockAddrLen);
+
+				iResult = sendto(serverSocket, accessBuffer, sizeof(rMessageHeader), 0, (LPSOCKADDR)&clientAddress, sockAddrLen);
 
 				if (iResult == SOCKET_ERROR) {
 					printf("Sendto failed with error: %d\n", WSAGetLastError());
@@ -126,12 +114,7 @@ int main(int argc, char* argv[])
 		{
 			//sendto "Rejected" Clinet
 			header->id = REJECTED;
-			iResult = sendto(serverSocket,
-				accessBuffer,
-				sizeof(int),
-				0,
-				(LPSOCKADDR)&clientAddress,
-				sockAddrLen);
+			iResult = sendto(serverSocket, accessBuffer, sizeof(rMessageHeader), 0, (LPSOCKADDR)&clientAddress, sockAddrLen);
 
 			if (iResult == SOCKET_ERROR) {
 				printf("Sendto failed with error: %d\n", WSAGetLastError());
@@ -145,12 +128,7 @@ int main(int argc, char* argv[])
 
 		while (messageSize - slider != 0)
 		{
-			iResult = recvfrom(serverSocket,
-				accessBuffer,
-				ACCESS_BUFFER_SIZE,
-				0,
-				(LPSOCKADDR)&clientAddress,
-				&sockAddrLen);
+			iResult = recvfrom(serverSocket, accessBuffer, ACCESS_BUFFER_SIZE, 0, (LPSOCKADDR)&clientAddress, &sockAddrLen);
 
 			if (iResult == SOCKET_ERROR)
 			{
