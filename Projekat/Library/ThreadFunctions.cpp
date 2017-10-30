@@ -82,6 +82,8 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 		{
 			// PRIMANJE
 			RecvOneMessage(h, tempbuffer, i);
+			//timeout?
+			//brojporuka = i
 		}
 
 		WaitForSingleObject(h->lock, INFINITE);
@@ -90,6 +92,28 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 		{
 			// KLIZAJUCI PROZOR		
 			SlideOneMessage(header, tempbuffer, i, h);
+			// NEPOTREBNO ???
+			////for j
+			//for (int j = 0; j <= brojPaketa + 1; j++)
+			//{
+			//	header = (rMessageHeader*)(tempbuffer + j * sizeof(rMessageHeader));
+			//	// Ako nije nasao ocekivani paket, izlazi iz obe petlje
+			//	if (j == brojPaketa + 1)
+			//		header->state = DROPPED;
+			//	// Ako je nasao zeljeni paket, sliduje ga
+			//	if (header->id == idPoslednjePrimljeno + 1)
+			//		break;				
+			//}
+
+			//// Ako je poruka dostavljena, brise se iz buffera
+			//if (header->state == RECIEVED)
+			//{
+			//	h->recv += header->size;
+			//	rDelete(&(h->buffer), header->size);
+			//	idPoslednjePrimljeno++;
+			//}
+			//else
+			//	break;
 		}
 
 		Algoritam(h);

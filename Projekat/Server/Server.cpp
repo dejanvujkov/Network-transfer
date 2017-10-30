@@ -109,6 +109,7 @@ int main(int argc, char* argv[])
 			if (iResult == SOCKET_ERROR) {
 				printf("Sendto failed with error: %d\n", WSAGetLastError());
 				closesocket(serverSocket);
+				free(messageBuffer);
 				WSACleanup();
 				return 1;
 			}
@@ -139,6 +140,9 @@ int main(int argc, char* argv[])
 	}// while (1);
 
 	Close(serverSocket);
+
+	free(clientAddress);
+	free(clientInfo);
 
 	return 0;
 }
@@ -230,5 +234,9 @@ DWORD WINAPI RecieveMessage(LPVOID param)
 	//ReleaseSemaphore(*(clientInfo->lock), 1, NULL);
 	free(clientInfo->clientAddress);
 	//free(clientInfo);
+	free(accessBuffer);
+
+	free(clientInfo->buffer);
+
 	return 0;
 }
