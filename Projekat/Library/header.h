@@ -12,10 +12,11 @@
 #include "enums.h"
 #include "KruzniBuffer.h"
 #include "ThreadHeaders.h"
-#include "Initialize.h"
 #include "Connect.h"
 #include "structs.h"
+#include "Initialize.h"
 
 //int Send(rSocket socket, char* data, int len);
-int Send2(SOCKET socket, char* buffer, int size, int flag, sockaddr* adresa, int tolen);
+int Send(SOCKET socket, char* buffer, int size, int flag, sockaddr* adresa, int tolen);
 int Recv(char* buffer, int len, SOCKET* socket, LPSOCKADDR* clientaddress, int addrLen);
+int Connect(SOCKET socket, SOCKADDR* adresa, int addrsize, int size);

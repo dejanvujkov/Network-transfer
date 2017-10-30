@@ -27,7 +27,7 @@
 //	return 0;
 //}
 
-int Send2(SOCKET socket, char * buffer, int size, int flag, sockaddr * adresa, int tolen)
+int Send(SOCKET socket, char * buffer, int size, int flag, sockaddr * adresa, int tolen)
 {
 	rHelper h;
 

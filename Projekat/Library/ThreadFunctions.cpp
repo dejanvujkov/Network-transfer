@@ -73,7 +73,7 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 		{
 			// SLANJE	
 			SendOneMessage(header, &idPoslednjePoslato, &brojPaketa, i, velicinaPoruke, h, &trenutnoProcitano, &procitano, tempbuffer);
-			Sleep(100);
+			Sleep(100); // Delay da server moze da isprati
 		}
 
 		ReleaseSemaphore(h->lock, 1, NULL);
@@ -81,7 +81,7 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 		for (int i = 0; i <= brojPaketa; i++)
 		{
 			// PRIMANJE
-			RecvOneMessage(h, tempbuffer, i);			
+			RecvOneMessage(h, tempbuffer, i);
 		}
 
 		WaitForSingleObject(h->lock, INFINITE);
@@ -94,7 +94,7 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 
 		Algoritam(h);
 
-		printf("[%d]\tB:%d\tCWND:%d\t\n", header->id, header->size, h->cwnd);
+		//printf("[%d]\tB:%d\tCWND:%d\t\n", header->id, header->size, h->cwnd);
 
 		Sleep(10);
 	}
@@ -176,12 +176,16 @@ int SendOneMessage(rMessageHeader* header, int* idPoslednjePoslato, int* brojPak
 		return -1;
 	}
 
+	printf("\n[%d] B: %d", header->id, header->size);
+
 	return 0;
 }
 
 int RecvOneMessage(rHelper* h, char* tempbuffer, int i)
 {
 	int iResult;
+
+	rMessageHeader* header = (rMessageHeader*)(tempbuffer + i * sizeof(rMessageHeader));
 
 	iResult = recvfrom(
 		*(h->socket),
@@ -197,6 +201,8 @@ int RecvOneMessage(rHelper* h, char* tempbuffer, int i)
 		printf("recvfrom failed with error: %d\n", WSAGetLastError());
 		return 1;
 	}
+
+	printf("\n[%d] ACK", header->id);
 
 	return 0;
 }

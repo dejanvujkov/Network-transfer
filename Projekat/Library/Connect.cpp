@@ -1,16 +1,16 @@
 #pragma once
-#include "Connect.h"
+#include "header.h"
 
-int Connect(SOCKET Socket, SOCKADDR * adresa, int size)
+int Connect(SOCKET Socket, SOCKADDR * adresa, int addrsize, int size)
 {
 	sockaddr_in a = *(sockaddr_in*)adresa;
 
 	int iResult;
 	rMessageHeader buffer;
 	buffer.id = REQUEST;
-	buffer.size = 1000000;
+	buffer.size = size;
 
-	iResult = sendto(Socket, (char*)&buffer, sizeof(rMessageHeader), 0, adresa, size);
+	iResult = sendto(Socket, (char*)&buffer, sizeof(rMessageHeader), 0, adresa, addrsize);
 
 	if (iResult == SOCKET_ERROR) {
 		printf("Sendto failed with error: %d\n", WSAGetLastError());
@@ -26,7 +26,7 @@ int Connect(SOCKET Socket, SOCKADDR * adresa, int size)
 		sizeof(rMessageHeader),
 		0,
 		adresa,
-		&size);
+		&addrsize);
 
 	if (iResult == SOCKET_ERROR)
 	{

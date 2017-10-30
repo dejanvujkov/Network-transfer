@@ -134,7 +134,6 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Connect.h" />
     <ClInclude Include="enums.h" />
     <ClInclude Include="header.h" />
     <ClInclude Include="Initialize.h" />

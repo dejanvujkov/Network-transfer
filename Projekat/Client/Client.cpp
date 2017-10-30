@@ -31,10 +31,10 @@ int main(int argc, char* argv[])
 	int sockAddrLen = sizeof(struct sockaddr);
 
 	//CONNECT
-	iResult = Connect(mySocket, (SOCKADDR*)&serverAddress, sizeof(serverAddress));
+	iResult = Connect(mySocket, (SOCKADDR*)&serverAddress, sizeof(serverAddress), buffSize);
 
 	//SEND
-	iResult = Send2(mySocket, buffer, buffSize, 0, (SOCKADDR*)&serverAddress, sockAddrLen);
+	iResult = Send(mySocket, buffer, buffSize, 0, (SOCKADDR*)&serverAddress, sockAddrLen);
 
 	/*rSocket socket;
 	socket.addr = SERVER_IP_ADDERESS;
