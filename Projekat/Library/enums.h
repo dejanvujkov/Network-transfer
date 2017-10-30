@@ -10,5 +10,6 @@ enum rConnectionState {
 
 enum rMessageState {
 	SENT,
-	RECIEVED
+	RECIEVED,
+	DROPPED
 };

@@ -70,6 +70,7 @@ int main(int argc, char* argv[])
 		{
 			if (lock)
 				break;
+			Sleep(1000);
 		} while (1);
 
 		// ACCEPT **
@@ -174,6 +175,8 @@ DWORD WINAPI RecieveMessage(LPVOID param)
 	rClientMessage* clientInfo = (rClientMessage*)param;
 	//WaitForSingleObject(clientInfo->lock, INFINITE);
 
+	int id = 1;
+
 	int iResult;
 
 	int sockAddrLen = sizeof(struct sockaddr);
@@ -193,17 +196,14 @@ DWORD WINAPI RecieveMessage(LPVOID param)
 
 		if (iResult == SOCKET_ERROR)
 		{
-			printf("recvfrom failed with error: %d\n", WSAGetLastError());
+			printf("\nrecvfrom failed with error: %d", WSAGetLastError());
 			continue;
 		}
 
-		printf("\n[%d] Recieved %d ", header->id, header->size);
-		memcpy(message, clientInfo->buffer, header->size);
-		clientInfo->slider += header->size;
-
-		printf("%d do sada", clientInfo->slider);
-
-		header->state = RECIEVED;
+		if (header->id != id)
+			header->state = DROPPED;
+		else
+			header->state = RECIEVED;
 
 		iResult = sendto(clientInfo->socket,
 			accessBuffer,
@@ -214,9 +214,22 @@ DWORD WINAPI RecieveMessage(LPVOID param)
 
 		if (iResult == SOCKET_ERROR)
 		{
-			printf("recvfrom failed with error: %d\n", WSAGetLastError());
+			printf("\nrecvfrom failed with error: %d", WSAGetLastError());
 			continue;
 		}
+
+		if (header->id != id) 
+		{
+			printf("\n[%d] dropped, expected [%d]", header->id, id);
+			continue;
+		}
+
+		id++;
+		printf("\n[%d] Recieved: %d ", header->id, header->size);
+		memcpy(message, clientInfo->buffer, header->size);
+		clientInfo->slider += header->size;
+
+		printf("\t\tTotal: %d", clientInfo->slider);
 	}
 
 	*(clientInfo->lock) = true;
