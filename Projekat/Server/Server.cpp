@@ -7,7 +7,7 @@ int main(int argc, char* argv[])
 	//HANDLE lock = CreateSemaphore(0, 1, 1, NULL);
 
 	bool lock = true;
-
+	DWORD timeout = 2 * 1000;
 	SOCKET serverSocket;
 
 	sockaddr_in serverAddress;
@@ -39,6 +39,7 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
+	setsockopt(serverSocket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
 	printf("Simple UDP server started and waiting client messages.\n");
 
 	rClientMessage* clientInfo;
@@ -48,24 +49,13 @@ int main(int argc, char* argv[])
 	while(1)
 	{
 		// Buffer za ukupnu poruku koja se prima
-
+		
 		// Adresa klijenta koji se povezuje
 		clientAddress = (sockaddr_in*)malloc(sizeof(sockaddr_in));
 		memset(clientAddress, 0, sizeof(sockaddr_in));
 		
 		clientInfo = (rClientMessage*)malloc(sizeof(rClientMessage));
 
-		//iResult = listen(serverSocket, SOMAXCONN);
-		/*if (iResult == SOCKET_ERROR)
-		{
-			printf("listen failed with error: %d\n", WSAGetLastError());
-			closesocket(serverSocket);
-			WSACleanup();
-			return 1;
-		}*/
-
-
-		//WaitForSingleObject(lock, INFINITE);
 		do
 		{
 			if (lock)
@@ -83,6 +73,10 @@ int main(int argc, char* argv[])
 
 		if (iResult == SOCKET_ERROR)
 		{
+			if (WSAGetLastError() == 10060) {
+				printf("Timed out\n");
+				continue;
+			}
 			printf("recvfrom failed with error: %d\n", WSAGetLastError());
 			continue;
 		}
