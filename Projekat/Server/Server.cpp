@@ -52,9 +52,13 @@ int main(int argc, char* argv[])
 		
 		// Adresa klijenta koji se povezuje
 		clientAddress = (sockaddr_in*)malloc(sizeof(sockaddr_in));
+		if (clientAddress == NULL)
+			continue;
 		memset(clientAddress, 0, sizeof(sockaddr_in));
 		
 		clientInfo = (rClientMessage*)malloc(sizeof(rClientMessage));
+		if (clientInfo == NULL)
+			continue;
 
 		do
 		{
@@ -182,6 +186,8 @@ DWORD WINAPI RecieveMessage(LPVOID param)
 	// Buffer za svaku poruku
 	char* accessBuffer;
 	accessBuffer = (char*)malloc(ACCESS_BUFFER_SIZE);
+	if (accessBuffer == NULL)
+		return 1;
 
 	rMessageHeader* header = (rMessageHeader*)accessBuffer;
 	char* message = accessBuffer + sizeof(rMessageHeader);

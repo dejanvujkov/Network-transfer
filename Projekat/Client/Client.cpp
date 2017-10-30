@@ -6,6 +6,8 @@ int main(int argc, char* argv[])
 	int buffSize = 1000000;
 	char* buffer;
 	buffer = (char*)malloc(buffSize);
+	if (buffer == NULL)
+		return 1;
 	memset(buffer, 77, buffSize);
 
 	WSADATA wsaData;

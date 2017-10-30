@@ -222,6 +222,12 @@ int RecvOneMessage(rHelper* h, char* tempbuffer, int i)
 
 	if (iResult == SOCKET_ERROR)
 	{
+		iResult = WSAGetLastError();
+		if (iResult == 10060)
+		{
+			//TIMED OUT
+			return 1;
+		}
 		printf("recvfrom failed with error: %d\n", WSAGetLastError());
 		return 1;
 	}
