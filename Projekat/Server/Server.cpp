@@ -4,7 +4,9 @@ DWORD WINAPI RecieveMessage(LPVOID param);
 
 int main(int argc, char* argv[])
 {
-	HANDLE lock = CreateSemaphore(0, 1, 1, NULL);
+	//HANDLE lock = CreateSemaphore(0, 1, 1, NULL);
+
+	bool lock = true;
 
 	SOCKET serverSocket;
 
@@ -51,7 +53,7 @@ int main(int argc, char* argv[])
 		clientAddress = (sockaddr_in*)malloc(sizeof(sockaddr_in));
 		memset(clientAddress, 0, sizeof(sockaddr_in));
 		
-		clientInfo = (rClientMessage*)malloc(sizeof(clientInfo));
+		clientInfo = (rClientMessage*)malloc(sizeof(rClientMessage));
 
 		//iResult = listen(serverSocket, SOMAXCONN);
 		/*if (iResult == SOCKET_ERROR)
@@ -62,7 +64,13 @@ int main(int argc, char* argv[])
 			return 1;
 		}*/
 
-		WaitForSingleObject(lock, INFINITE);
+
+		//WaitForSingleObject(lock, INFINITE);
+		do
+		{
+			if (lock)
+				break;
+		} while (1);
 
 		// ACCEPT **
 		iResult = recvfrom(serverSocket,
@@ -129,7 +137,7 @@ int main(int argc, char* argv[])
 
 
 		// Primi celu poruku
-		
+		lock = false;
 		HANDLE thread = CreateThread(NULL, 0, RecieveMessage, clientInfo, 0, NULL);
 		//Sleep(100);
 		
@@ -211,7 +219,8 @@ DWORD WINAPI RecieveMessage(LPVOID param)
 		}
 	}
 
-	ReleaseSemaphore(clientInfo->lock, 1, NULL);
+	*(clientInfo->lock) = true;
+	//ReleaseSemaphore(*(clientInfo->lock), 1, NULL);
 	free(clientInfo->clientAddress);
 	//free(clientInfo);
 	return 0;

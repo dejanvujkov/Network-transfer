@@ -35,7 +35,7 @@ typedef struct rClientMessage {
 	int messageSize;
 	sockaddr_in* clientAddress;
 	SOCKET socket;
-	HANDLE* lock;
+	bool* lock;
 } rClientMessage;
 
 typedef struct rSocket {
