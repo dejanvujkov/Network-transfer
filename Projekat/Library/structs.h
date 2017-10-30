@@ -33,7 +33,9 @@ typedef struct rClientMessage {
 	char* buffer;
 	int slider;
 	int messageSize;
-	sockaddr_in clientAddress;
+	sockaddr_in* clientAddress;
+	SOCKET socket;
+	HANDLE* lock;
 } rClientMessage;
 
 typedef struct rSocket {

@@ -73,6 +73,7 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 		{
 			// SLANJE	
 			SendOneMessage(header, &idPoslednjePoslato, &brojPaketa, i, velicinaPoruke, h, &trenutnoProcitano, &procitano, tempbuffer);
+			Sleep(100);
 		}
 
 		ReleaseSemaphore(h->lock, 1, NULL);
