@@ -18,5 +18,5 @@
 
 //int Send(rSocket socket, char* data, int len);
 int Send(SOCKET socket, char* buffer, int size, int flag, sockaddr* adresa, int tolen);
-int Recv(char* buffer, int len, SOCKET* socket, LPSOCKADDR* clientaddress, int addrLen);
+int Recv(SOCKET socket, char* buffer, int size, LPSOCKADDR* clientaddress, int addrLen);
 int Connect(SOCKET socket, SOCKADDR* adresa, int addrsize, int size);

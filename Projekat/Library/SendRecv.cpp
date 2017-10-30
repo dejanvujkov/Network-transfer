@@ -18,3 +18,8 @@ int Send(SOCKET socket, char * buffer, int size, int flag, sockaddr * adresa, in
 
 	return 0;
 }
+
+int Recv(SOCKET socket, char * buffer, int size, LPSOCKADDR * clientaddress, int addrLen)
+{
+	return 0;
+}
