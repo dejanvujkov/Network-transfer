@@ -159,14 +159,14 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	Close(iResult, serverSocket);
+	Close(serverSocket);
 
 	return 0;
 }
 
-int Close(int iResult, SOCKET serverSocket) {
+int Close(SOCKET serverSocket) {
 
-	iResult = closesocket(serverSocket);
+	int iResult = closesocket(serverSocket);
 	if (iResult == SOCKET_ERROR)
 	{
 		printf("closesocket failed with error: %ld\n", WSAGetLastError());

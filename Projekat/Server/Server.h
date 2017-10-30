@@ -9,4 +9,4 @@
 #define ACCESS_BUFFER_SIZE 64 * 1024
 #define IP_ADDRESS_LEN 16
 
-int Close(int iResult, SOCKET serverSocket);
+int Close(SOCKET serverSocket);
