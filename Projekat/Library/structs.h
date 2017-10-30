@@ -29,6 +29,15 @@ typedef struct rHelper {
 	sockaddr_in* adresa;	// Adresa servera
 } rHelper;
 
+typedef struct rClientMessage {
+	char* buffer;
+	int slider;
+	int messageSize;
+	sockaddr_in* clientAddress;
+	SOCKET socket;
+	bool* lock;
+} rClientMessage;
+
 typedef struct rSocket {
 	char* addr;
 	int port;

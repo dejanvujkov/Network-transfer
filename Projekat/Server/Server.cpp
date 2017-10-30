@@ -1,11 +1,20 @@
 #include "Inicijalizacija.h"
 
+DWORD WINAPI RecieveMessage(LPVOID param);
+
 int main(int argc, char* argv[])
 {
+	//HANDLE lock = CreateSemaphore(0, 1, 1, NULL);
+
+	bool lock = true;
+
+	SOCKET serverSocket;
+
 	sockaddr_in serverAddress;
 	int sockAddrLen = sizeof(struct sockaddr);
+
 	int iResult;
-	SOCKET serverSocket;
+	rMessageHeader connectionBuffer;
 
 	if (InitializeWindowsSockets() == false)
 	{
@@ -32,29 +41,43 @@ int main(int argc, char* argv[])
 
 	printf("Simple UDP server started and waiting client messages.\n");
 
+	rClientMessage* clientInfo;
+	sockaddr_in* clientAddress;
+
 	// Main server loop
-	while (1)
+	while(1)
 	{
-		char* messageBuffer;
-		int slider = 0;
-		int messageSize = 0;
-		char* accessBuffer;
-		accessBuffer = (char*)malloc(ACCESS_BUFFER_SIZE);
-		memset(accessBuffer, 0, ACCESS_BUFFER_SIZE);
+		// Buffer za ukupnu poruku koja se prima
 
-		rMessageHeader* header;
-		char* message;
+		// Adresa klijenta koji se povezuje
+		clientAddress = (sockaddr_in*)malloc(sizeof(sockaddr_in));
+		memset(clientAddress, 0, sizeof(sockaddr_in));
+		
+		clientInfo = (rClientMessage*)malloc(sizeof(rClientMessage));
 
-		sockaddr_in clientAddress;
-		memset(&clientAddress, 0, sizeof(sockaddr_in));
-				
+		//iResult = listen(serverSocket, SOMAXCONN);
+		/*if (iResult == SOCKET_ERROR)
+		{
+			printf("listen failed with error: %d\n", WSAGetLastError());
+			closesocket(serverSocket);
+			WSACleanup();
+			return 1;
+		}*/
 
-		// receive client message
+
+		//WaitForSingleObject(lock, INFINITE);
+		do
+		{
+			if (lock)
+				break;
+		} while (1);
+
+		// ACCEPT **
 		iResult = recvfrom(serverSocket,
-			accessBuffer,
-			ACCESS_BUFFER_SIZE,
+			(char*)&connectionBuffer,
+			sizeof(rMessageHeader),
 			0,
-			(LPSOCKADDR)&clientAddress,
+			(LPSOCKADDR)clientAddress,
 			&sockAddrLen);
 
 		if (iResult == SOCKET_ERROR)
@@ -64,57 +87,29 @@ int main(int argc, char* argv[])
 		}
 
 		char ipAddress[IP_ADDRESS_LEN];
-		strcpy_s(ipAddress, sizeof(ipAddress), inet_ntoa(clientAddress.sin_addr));
-		int clientPort = ntohs((u_short)clientAddress.sin_port);
+		strcpy_s(ipAddress, sizeof(ipAddress), inet_ntoa((*clientAddress).sin_addr));
+		int clientPort = ntohs((u_short)(*clientAddress).sin_port);
 
 		printf("Client connected from ip: %s, port: %d\n", ipAddress, clientPort);
 		
-		header = (rMessageHeader*)accessBuffer;
-		message = accessBuffer + sizeof(rMessageHeader);
-		messageSize = header->size;
 		
-		if (header->id == REQUEST) {
-						
-			messageBuffer = (char*)malloc(messageSize);
+		if (connectionBuffer.id == REQUEST)
+		{
+			char* messageBuffer = (char*)malloc(connectionBuffer.size);
 
 			if (messageBuffer != NULL)
-			{
-				//sendto "Accepted" Clinet
-				header->id = ACCEPTED;
-
-				iResult = sendto(serverSocket, accessBuffer, sizeof(rMessageHeader), 0, (LPSOCKADDR)&clientAddress, sockAddrLen);
-
-				if (iResult == SOCKET_ERROR) {
-					printf("Sendto failed with error: %d\n", WSAGetLastError());
-					closesocket(serverSocket);
-					WSACleanup();
-					return 1;
-				}
-				
-				printf("Server poslao Accepted\n");
-			}
+				connectionBuffer.id = ACCEPTED;
 			else
-			{
-				//sendto "Rejected" Clinet
-				header->id = REJECTED;
+				connectionBuffer.id = REJECTED;
 
-				iResult = sendto(serverSocket, accessBuffer, sizeof(rMessageHeader), 0, (LPSOCKADDR)&clientAddress, sockAddrLen);
+			clientInfo->buffer = messageBuffer;
+			clientInfo->clientAddress = clientAddress;
+			clientInfo->messageSize = connectionBuffer.size;
+			clientInfo->slider = 0;
+			clientInfo->socket = serverSocket;
+			clientInfo->lock = &lock;
 
-				if (iResult == SOCKET_ERROR) {
-					printf("Sendto failed with error: %d\n", WSAGetLastError());
-					closesocket(serverSocket);
-					WSACleanup();
-					return 1;
-				}
-
-				printf("Server poslao Rejected\n");
-			}
-		}
-		else
-		{
-			//sendto "Rejected" Clinet
-			header->id = REJECTED;
-			iResult = sendto(serverSocket, accessBuffer, sizeof(rMessageHeader), 0, (LPSOCKADDR)&clientAddress, sockAddrLen);
+			iResult = sendto(serverSocket, (char*)&connectionBuffer, sizeof(rMessageHeader), 0, (LPSOCKADDR)clientAddress, sockAddrLen);
 
 			if (iResult == SOCKET_ERROR) {
 				printf("Sendto failed with error: %d\n", WSAGetLastError());
@@ -123,41 +118,30 @@ int main(int argc, char* argv[])
 				return 1;
 			}
 
-			printf("Server poslao Rejected\n");
+			if (connectionBuffer.id == ACCEPTED)
+			{
+				printf("Server poslao Accepted\n");
+			}
+			else
+			{
+				printf("Server poslao Rejected\n");
+				continue;
+			}
 		}
-
-		while (messageSize - slider != 0)
+		else
 		{
-			iResult = recvfrom(serverSocket, accessBuffer, ACCESS_BUFFER_SIZE, 0, (LPSOCKADDR)&clientAddress, &sockAddrLen);
-
-			if (iResult == SOCKET_ERROR)
-			{
-				printf("recvfrom failed with error: %d\n", WSAGetLastError());
-				continue;
-			}
-
-			printf("\n[%d] Recieved %d ", header->id, header->size);
-			memcpy(message, messageBuffer, header->size);
-			slider += header->size;
-
-			printf("%d do sada", slider);
-
-			header->state = RECIEVED;
-
-			iResult = sendto(serverSocket,
-				accessBuffer,
-				sizeof(rMessageHeader),
-				0,
-				(LPSOCKADDR)&clientAddress,
-				sockAddrLen);
-
-			if (iResult == SOCKET_ERROR)
-			{
-				printf("recvfrom failed with error: %d\n", WSAGetLastError());
-				continue;
-			}
+			// Ako nije REQUEST server ignorise poruku
+			continue;
 		}
-	}
+		// ACCEPT END **
+
+
+		// Primi celu poruku
+		lock = false;
+		HANDLE thread = CreateThread(NULL, 0, RecieveMessage, clientInfo, 0, NULL);
+		//Sleep(100);
+		
+	}// while (1);
 
 	Close(serverSocket);
 
@@ -181,4 +165,63 @@ int Close(SOCKET serverSocket) {
 	}
 
 	printf("Server successfully shut down.\n");
+
+	return 0;
+}
+
+DWORD WINAPI RecieveMessage(LPVOID param)
+{
+	rClientMessage* clientInfo = (rClientMessage*)param;
+	//WaitForSingleObject(clientInfo->lock, INFINITE);
+
+	int iResult;
+
+	int sockAddrLen = sizeof(struct sockaddr);
+
+	// Buffer za svaku poruku
+	char* accessBuffer;
+	accessBuffer = (char*)malloc(ACCESS_BUFFER_SIZE);
+
+	rMessageHeader* header = (rMessageHeader*)accessBuffer;
+	char* message = accessBuffer + sizeof(rMessageHeader);
+	// NEBITNO memset(accessBuffer, 0, ACCESS_BUFFER_SIZE);
+	
+	// Prima svaki paket
+	while (clientInfo->messageSize - clientInfo->slider != 0)
+	{
+		iResult = recvfrom(clientInfo->socket, accessBuffer, ACCESS_BUFFER_SIZE, 0, (LPSOCKADDR)clientInfo->clientAddress, &sockAddrLen);
+
+		if (iResult == SOCKET_ERROR)
+		{
+			printf("recvfrom failed with error: %d\n", WSAGetLastError());
+			continue;
+		}
+
+		printf("\n[%d] Recieved %d ", header->id, header->size);
+		memcpy(message, clientInfo->buffer, header->size);
+		clientInfo->slider += header->size;
+
+		printf("%d do sada", clientInfo->slider);
+
+		header->state = RECIEVED;
+
+		iResult = sendto(clientInfo->socket,
+			accessBuffer,
+			sizeof(rMessageHeader),
+			0,
+			(LPSOCKADDR)clientInfo->clientAddress,
+			sockAddrLen);
+
+		if (iResult == SOCKET_ERROR)
+		{
+			printf("recvfrom failed with error: %d\n", WSAGetLastError());
+			continue;
+		}
+	}
+
+	*(clientInfo->lock) = true;
+	//ReleaseSemaphore(*(clientInfo->lock), 1, NULL);
+	free(clientInfo->clientAddress);
+	//free(clientInfo);
+	return 0;
 }

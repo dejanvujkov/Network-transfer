@@ -1,9 +1,5 @@
 #include "header.h"
 
-int SendOneMessage(rMessageHeader* header, int* idPoslednjePoslato, int* brojPaketa, int i, int velicinaPoruke, rHelper* h, int* trenutnoProcitano, int* procitano, char* tempbuffer);
-int RecvOneMessage(rHelper* h, char* tempbuffer, int i);
-int SlideOneMessage(rMessageHeader* header, char* tempbuffer, int i, rHelper* h);
-
 DWORD WINAPI FromDataToBuffer(LPVOID param)
 {
 	rHelper* h = (rHelper*)param;
@@ -77,6 +73,7 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 		{
 			// SLANJE	
 			SendOneMessage(header, &idPoslednjePoslato, &brojPaketa, i, velicinaPoruke, h, &trenutnoProcitano, &procitano, tempbuffer);
+			Sleep(100);
 		}
 
 		ReleaseSemaphore(h->lock, 1, NULL);
