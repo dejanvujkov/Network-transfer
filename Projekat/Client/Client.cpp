@@ -27,7 +27,8 @@ int main(int argc, char* argv[])
 	sockaddr_in serverAddress;
 	memset((char*)&serverAddress, 0, sizeof(serverAddress));
 	serverAddress.sin_family = AF_INET;
-	serverAddress.sin_addr.s_addr = inet_addr(SERVER_IP_ADDERESS);
+	//serverAddress.sin_addr.s_addr = inet_addr(SERVER_IP_ADDERESS);
+	serverAddress.sin_addr.s_addr = inet_addr("192.168.101.251");
 	serverAddress.sin_port = htons((u_short)SERVER_PORT);
 
 	int sockAddrLen = sizeof(struct sockaddr);
