@@ -4,10 +4,9 @@ DWORD WINAPI RecieveMessage(LPVOID param);
 
 int main(int argc, char* argv[])
 {
-	//HANDLE lock = CreateSemaphore(0, 1, 1, NULL);
-
 	bool lock = true;
-	DWORD timeout = 2 * 1000;
+
+	DWORD timeout = 1 * 1000;
 	SOCKET serverSocket;
 
 	sockaddr_in serverAddress;
@@ -67,7 +66,6 @@ int main(int argc, char* argv[])
 			Sleep(1000);
 		} while (1);
 
-		//ReleaseSemaphore(lock, 1, 0);
 		// ACCEPT **
 		iResult = recvfrom(serverSocket,
 			(char*)&connectionBuffer,
@@ -141,7 +139,6 @@ int main(int argc, char* argv[])
 
 		lock = false;
 		HANDLE thread = CreateThread(NULL, 0, RecieveMessage, clientInfo, 0, NULL);
-		//WaitForSingleObject(lock, INFINITE);
 		//Sleep(100);
 		
 	}// while (1);
@@ -178,7 +175,6 @@ int Close(SOCKET serverSocket) {
 DWORD WINAPI RecieveMessage(LPVOID param)
 {
 	rClientMessage* clientInfo = (rClientMessage*)param;
-	//WaitForSingleObject(clientInfo->lock, INFINITE);
 
 	int id = 1;
 
@@ -197,7 +193,7 @@ DWORD WINAPI RecieveMessage(LPVOID param)
 	// NEBITNO memset(accessBuffer, 0, ACCESS_BUFFER_SIZE);
 	
 	// Prima svaki paket
-	while (clientInfo->messageSize - clientInfo->slider != 0)
+	while (clientInfo->messageSize - clientInfo->slider > 0)
 	{
 		iResult = recvfrom(clientInfo->socket, accessBuffer, ACCESS_BUFFER_SIZE, 0, (LPSOCKADDR)clientInfo->clientAddress, &sockAddrLen);
 
@@ -255,7 +251,6 @@ DWORD WINAPI RecieveMessage(LPVOID param)
 	}
 
 	*(clientInfo->lock) = true;
-	//ReleaseSemaphore(*(clientInfo->lock), 1, NULL);
 	free(clientInfo->clientAddress);
 	//free(clientInfo);
 	free(accessBuffer);

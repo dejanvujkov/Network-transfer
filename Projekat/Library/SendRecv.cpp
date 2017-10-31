@@ -12,10 +12,11 @@ int Send(SOCKET socket, char * buffer, int size, int flag, sockaddr * adresa, in
 	//thread2 petlja koja uzima iz buffer i salje preko mreze
 	HANDLE thread2 = CreateThread(NULL, 0, &SendDataFromBuffer, &h, 0, NULL);
 
-	getchar();
-
-	rFreeBuffer(&(h.buffer));
-
+	WaitForSingleObject(thread1, INFINITE);
+	WaitForSingleObject(thread2, INFINITE);
+	
+	printf("\nPoruka poslata");
+	
 	return 0;
 }
 

@@ -3,7 +3,7 @@
 // UDP client that uses blocking sockets
 int main(int argc, char* argv[])
 {
-	int buffSize = 1000000;
+	int buffSize = 500000000;
 	char* buffer;
 	buffer = (char*)malloc(buffSize);
 	if (buffer == NULL)
@@ -33,12 +33,14 @@ int main(int argc, char* argv[])
 	int sockAddrLen = sizeof(struct sockaddr);
 
 	//CONNECT
+	int SleepTime = 500;
 	do {
 		iResult = Connect(mySocket, (SOCKADDR*)&serverAddress, sizeof(serverAddress), buffSize);
 		if (iResult == -1)
 		{
-			printf("\nServer rejected trying again.\n");
-			Sleep(1000);
+			SleepTime *= 2;
+			printf("\nTrying again in %d sec.\n", SleepTime/1000);
+			Sleep(SleepTime);
 			//getchar();
 			//return 1;
 		}
@@ -47,6 +49,8 @@ int main(int argc, char* argv[])
 	//SEND
 	iResult = Send(mySocket, buffer, buffSize, 0, (SOCKADDR*)&serverAddress, sockAddrLen);
 
+
+	getchar();
 	/*rSocket socket;
 	socket.addr = SERVER_IP_ADDERESS;
 	socket.port = SERVER_PORT;
