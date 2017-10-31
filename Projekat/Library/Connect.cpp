@@ -7,7 +7,7 @@ int Connect(SOCKET Socket, SOCKADDR * adresa, int addrsize, int size)
 
 	int iResult;
 	rMessageHeader buffer;
-	buffer.id = REQUEST;
+	buffer.state = REQUEST;
 	buffer.size = size;
 
 	iResult = sendto(Socket, (char*)&buffer, sizeof(rMessageHeader), 0, adresa, addrsize);
@@ -34,12 +34,12 @@ int Connect(SOCKET Socket, SOCKADDR * adresa, int addrsize, int size)
 		return -1;
 	}
 
-	if (buffer.id == ACCEPTED) {
+	if (buffer.state == ACCEPTED) {
 
 		printf("Connected to server\n");
 		return 0;
 	}
-	else if (buffer.id == REJECTED)
+	else if (buffer.state == REJECTED)
 	{
 		printf("Server rejected connection");
 		return -1;

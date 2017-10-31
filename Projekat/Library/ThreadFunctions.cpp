@@ -81,9 +81,12 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 		for (int i = 0; i <= brojPaketa; i++)
 		{
 			// PRIMANJE
-			RecvOneMessage(h, tempbuffer, i);
-			//timeout?
-			//brojporuka = i
+			if (RecvOneMessage(h, tempbuffer, i) == -1)
+			{
+				// Doslo to timeout-a
+				brojPaketa = i;
+				break;
+			}
 		}
 
 		WaitForSingleObject(h->lock, INFINITE);
@@ -208,7 +211,6 @@ int SendOneMessage(rMessageHeader* header, int* idPoslednjePoslato, int* brojPak
 int RecvOneMessage(rHelper* h, char* tempbuffer, int i)
 {
 	int iResult;
-
 	rMessageHeader* header = (rMessageHeader*)(tempbuffer + i * sizeof(rMessageHeader));
 
 	iResult = recvfrom(
@@ -226,7 +228,7 @@ int RecvOneMessage(rHelper* h, char* tempbuffer, int i)
 		if (iResult == 10060)
 		{
 			//TIMED OUT
-			return 1;
+			return -1;
 		}
 		printf("recvfrom failed with error: %d\n", WSAGetLastError());
 		return 1;

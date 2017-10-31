@@ -16,6 +16,9 @@ void Initialize(rHelper* h, SOCKET* socket, char* buffer, int size, sockaddr* ad
 	(*h).socket = socket;
 	(*h).adresa = (sockaddr_in*)adresa;
 
+	DWORD timeout = WAIT_FOR_ACK_SEC * 1000;
+	setsockopt(*(h->socket), SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
+
 	int bfSize;
 	if (size < MAX_BUFFER_SIZE)
 		bfSize = size;

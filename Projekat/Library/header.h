@@ -2,6 +2,7 @@
 #define MAX_BUFFER_SIZE 10*1024*1024	// 10 MB
 // Korisna velicina UDP paketa
 #define MAX_UDP_SIZE 64*1024 - 29
+#define WAIT_FOR_ACK_SEC 5
 
 #include <stdlib.h>
 #include <string.h>

@@ -33,7 +33,16 @@ int main(int argc, char* argv[])
 	int sockAddrLen = sizeof(struct sockaddr);
 
 	//CONNECT
-	iResult = Connect(mySocket, (SOCKADDR*)&serverAddress, sizeof(serverAddress), buffSize);
+	do {
+		iResult = Connect(mySocket, (SOCKADDR*)&serverAddress, sizeof(serverAddress), buffSize);
+		if (iResult == -1)
+		{
+			printf("\nServer rejected trying again.\n");
+			Sleep(1000);
+			//getchar();
+			//return 1;
+		}
+	} while (iResult == -1);
 
 	//SEND
 	iResult = Send(mySocket, buffer, buffSize, 0, (SOCKADDR*)&serverAddress, sockAddrLen);

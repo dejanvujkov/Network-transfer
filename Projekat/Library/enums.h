@@ -1,14 +1,14 @@
 #pragma once
 
 enum rConnectionState {
-	REQUEST = 10,
-	ACCEPTED,
-	REJECTED,
 	CONNECTED,
 	DISCONNECTED
 };
 
 enum rMessageState {
+	REQUEST,
+	ACCEPTED,
+	REJECTED,
 	SENT,
 	RECIEVED,
 	DROPPED

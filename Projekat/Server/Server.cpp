@@ -67,6 +67,7 @@ int main(int argc, char* argv[])
 			Sleep(1000);
 		} while (1);
 
+		//ReleaseSemaphore(lock, 1, 0);
 		// ACCEPT **
 		iResult = recvfrom(serverSocket,
 			(char*)&connectionBuffer,
@@ -92,14 +93,14 @@ int main(int argc, char* argv[])
 		printf("Client connected from ip: %s, port: %d\n", ipAddress, clientPort);
 		
 		
-		if (connectionBuffer.id == REQUEST)
+		if (connectionBuffer.state == REQUEST)
 		{
 			char* messageBuffer = (char*)malloc(connectionBuffer.size);
 
 			if (messageBuffer != NULL)
-				connectionBuffer.id = ACCEPTED;
+				connectionBuffer.state = ACCEPTED;
 			else
-				connectionBuffer.id = REJECTED;
+				connectionBuffer.state = REJECTED;
 
 			clientInfo->buffer = messageBuffer;
 			clientInfo->clientAddress = clientAddress;
@@ -118,7 +119,7 @@ int main(int argc, char* argv[])
 				return 1;
 			}
 
-			if (connectionBuffer.id == ACCEPTED)
+			if (connectionBuffer.state == ACCEPTED)
 			{
 				printf("Server poslao Accepted\n");
 			}
@@ -137,8 +138,10 @@ int main(int argc, char* argv[])
 
 
 		// Primi celu poruku
+
 		lock = false;
 		HANDLE thread = CreateThread(NULL, 0, RecieveMessage, clientInfo, 0, NULL);
+		//WaitForSingleObject(lock, INFINITE);
 		//Sleep(100);
 		
 	}// while (1);
@@ -201,6 +204,21 @@ DWORD WINAPI RecieveMessage(LPVOID param)
 		if (iResult == SOCKET_ERROR)
 		{
 			printf("\nrecvfrom failed with error: %d", WSAGetLastError());
+			continue;
+		}
+
+		if (header->state == REQUEST)
+		{
+			// Ako stigne request od drugog klijenta, salje se reject
+			header->state = REJECTED;
+
+			iResult = sendto(clientInfo->socket,
+				accessBuffer,
+				sizeof(rMessageHeader),
+				0,
+				(LPSOCKADDR)clientInfo->clientAddress,
+				sockAddrLen);
+
 			continue;
 		}
 
