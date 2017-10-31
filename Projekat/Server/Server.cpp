@@ -5,7 +5,7 @@ int main(int argc, char* argv[])
 	//HANDLE lock = CreateSemaphore(0, 1, 1, NULL);
 
 	bool lock = true;
-	DWORD timeout = 2 * 1000;
+	DWORD timeout = 1 * 1000;
 	SOCKET serverSocket;
 
 	sockaddr_in serverAddress;
@@ -173,7 +173,7 @@ DWORD WINAPI RecieveMessage(LPVOID param)
 	// NEBITNO memset(accessBuffer, 0, ACCESS_BUFFER_SIZE);
 	
 	// Prima svaki paket
-	while (clientInfo->messageSize - clientInfo->slider != 0)
+	while (clientInfo->messageSize - clientInfo->slider > 0)
 	{
 		iResult = recvfrom(clientInfo->socket, accessBuffer, ACCESS_BUFFER_SIZE, 0, (LPSOCKADDR)clientInfo->clientAddress, &sockAddrLen);
 
