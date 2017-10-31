@@ -1,12 +1,11 @@
-#include "Inicijalizacija.h"
-
-DWORD WINAPI RecieveMessage(LPVOID param);
+#include "Server.h"
 
 int main(int argc, char* argv[])
 {
-	bool lock = true;
+	//HANDLE lock = CreateSemaphore(0, 1, 1, NULL);
 
-	DWORD timeout = 1 * 1000;
+	bool lock = true;
+	DWORD timeout = 2 * 1000;
 	SOCKET serverSocket;
 
 	sockaddr_in serverAddress;
@@ -66,7 +65,7 @@ int main(int argc, char* argv[])
 			Sleep(1000);
 		} while (1);
 
-		// ACCEPT **
+		// ACCEPT 
 		iResult = recvfrom(serverSocket,
 			(char*)&connectionBuffer,
 			sizeof(rMessageHeader),
@@ -93,26 +92,12 @@ int main(int argc, char* argv[])
 		
 		if (connectionBuffer.state == REQUEST)
 		{
-			char* messageBuffer = (char*)malloc(connectionBuffer.size);
-
-			if (messageBuffer != NULL)
-				connectionBuffer.state = ACCEPTED;
-			else
-				connectionBuffer.state = REJECTED;
-
-			clientInfo->buffer = messageBuffer;
-			clientInfo->clientAddress = clientAddress;
-			clientInfo->messageSize = connectionBuffer.size;
-			clientInfo->slider = 0;
-			clientInfo->socket = serverSocket;
-			clientInfo->lock = &lock;
-
+			connectionBuffer.state = ACCEPTED;
 			iResult = sendto(serverSocket, (char*)&connectionBuffer, sizeof(rMessageHeader), 0, (LPSOCKADDR)clientAddress, sockAddrLen);
 
 			if (iResult == SOCKET_ERROR) {
 				printf("Sendto failed with error: %d\n", WSAGetLastError());
 				closesocket(serverSocket);
-				free(messageBuffer);
 				WSACleanup();
 				return 1;
 			}
@@ -132,14 +117,8 @@ int main(int argc, char* argv[])
 			// Ako nije REQUEST server ignorise poruku
 			continue;
 		}
-		// ACCEPT END **
 
-
-		// Primi celu poruku
-
-		lock = false;
-		HANDLE thread = CreateThread(NULL, 0, RecieveMessage, clientInfo, 0, NULL);
-		//Sleep(100);
+		Receive(serverSocket, connectionBuffer.size, &lock, clientAddress, clientInfo);
 		
 	}// while (1);
 
@@ -175,6 +154,7 @@ int Close(SOCKET serverSocket) {
 DWORD WINAPI RecieveMessage(LPVOID param)
 {
 	rClientMessage* clientInfo = (rClientMessage*)param;
+	//WaitForSingleObject(clientInfo->lock, INFINITE);
 
 	int id = 1;
 
@@ -193,7 +173,7 @@ DWORD WINAPI RecieveMessage(LPVOID param)
 	// NEBITNO memset(accessBuffer, 0, ACCESS_BUFFER_SIZE);
 	
 	// Prima svaki paket
-	while (clientInfo->messageSize - clientInfo->slider > 0)
+	while (clientInfo->messageSize - clientInfo->slider != 0)
 	{
 		iResult = recvfrom(clientInfo->socket, accessBuffer, ACCESS_BUFFER_SIZE, 0, (LPSOCKADDR)clientInfo->clientAddress, &sockAddrLen);
 
@@ -251,11 +231,33 @@ DWORD WINAPI RecieveMessage(LPVOID param)
 	}
 
 	*(clientInfo->lock) = true;
+	//ReleaseSemaphore(*(clientInfo->lock), 1, NULL);
 	free(clientInfo->clientAddress);
 	//free(clientInfo);
 	free(accessBuffer);
 
 	free(clientInfo->buffer);
+
+	return 0;
+}
+
+int Receive(SOCKET socket, int messageLength, bool* lock, sockaddr_in* clientAddress, rClientMessage* info) {
+
+	char* messageBuffer = (char*)malloc(messageLength);
+
+	//Popunjavanje odgovarajucih polja
+	info->buffer = messageBuffer;
+	info->messageSize = messageLength;
+	info->slider = 0;
+	info->socket = socket;
+	info->clientAddress = clientAddress;
+	info->lock = lock;
+
+	// Primi celu poruku
+	*lock = false;
+	HANDLE thread = CreateThread(NULL, 0, RecieveMessage, info, 0, NULL);
+
+	WaitForSingleObject(thread, INFINITE);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-#include "Inicijalizacija.h"
+#include "Server.h"
 
 void InitializeSocket(SOCKET * serverSocket, sockaddr_in * serverAddress)
 {

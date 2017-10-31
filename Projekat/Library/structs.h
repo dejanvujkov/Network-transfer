@@ -48,9 +48,3 @@ typedef struct rMessageHeader {
 	int id;					// Oznaka poruke
 	int size;				// Velicina poruke
 } rMessageHeader;
-
-typedef struct RelStruct {
-	char *buffSent;
-	char *buffRecv;
-	SOCKET socket;
-}RelStruct;
