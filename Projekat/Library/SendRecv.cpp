@@ -20,24 +20,7 @@ int Send(SOCKET socket, char * buffer, int size, int flag, sockaddr * adresa, in
 	return 0;
 }
 
-
-int Receive(SOCKET socket, int messageLength, bool* lock, sockaddr_in* clientAddress, rClientMessage* info) {
-
-	char* messageBuffer = (char*)malloc(messageLength);
-
-	//Popunjavanje odgovarajucih polja
-	info->buffer = messageBuffer;
-	info->messageSize = messageLength;
-	info->slider = 0;
-	info->socket = socket;
-	info->clientAddress = clientAddress;
-	info->lock = lock;
-
-	// Primi celu poruku
-	*lock = false;
-	HANDLE thread = CreateThread(NULL, 0, RecieveMessage, info, 0, NULL);
-
-	WaitForSingleObject(thread, INFINITE);
-
+int Recv(SOCKET socket, char * buffer, int size, LPSOCKADDR * clientaddress, int addrLen)
+{
 	return 0;
 }

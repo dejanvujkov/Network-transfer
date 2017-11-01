@@ -155,11 +155,6 @@
     <ClInclude Include="Inicijalizacija.h" />
     <ClInclude Include="Server.h" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Library\Library.vcxproj">
-      <Project>{daa14386-bc6c-42a2-9354-99dd64bf3e25}</Project>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
