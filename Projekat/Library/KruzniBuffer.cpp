@@ -29,19 +29,17 @@ int rResize(Kruzni_Buffer* buffer, int size)
 	{
 		// Ako nema prelamanja
 		memcpy(temp, buffer->tail, buffer->taken);
-
-		free(buffer->buffer_start);
-		buffer->buffer_start = temp;
 	}
 	else
 	{
 		// Ako ima prelamanja
 		memcpy(temp, buffer->tail, buffer->buffer_end - buffer->tail);
 		memcpy(temp + (buffer->buffer_end - buffer->tail), buffer->buffer_start, buffer->taken - (buffer->buffer_end - buffer->tail));
-
-		free(buffer->buffer_start);
-		buffer->buffer_start = temp;
 	}
+
+	free(buffer->buffer_start);
+	buffer->buffer_start = temp;
+	buffer->buffer_end = buffer->buffer_start + size;
 
 	buffer->head = buffer->buffer_start + buffer->taken;
 	buffer->tail = buffer->buffer_start;
