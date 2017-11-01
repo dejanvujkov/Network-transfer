@@ -3,7 +3,9 @@
 // UDP client that uses blocking sockets
 int main(int argc, char* argv[])
 {
-	int buffSize = 500000000;
+	int buffSize;
+	printf("Enter buffer size: ");
+	scanf("%d", &buffSize);
 	char* buffer;
 	buffer = (char*)malloc(buffSize);
 	if (buffer == NULL)
@@ -41,8 +43,6 @@ int main(int argc, char* argv[])
 			SleepTime *= 2;
 			printf("\nTrying again in %d sec.\n", SleepTime/1000);
 			Sleep(SleepTime);
-			//getchar();
-			//return 1;
 		}
 	} while (iResult == -1);
 
@@ -51,11 +51,6 @@ int main(int argc, char* argv[])
 
 
 	getchar();
-	/*rSocket socket;
-	socket.addr = SERVER_IP_ADDERESS;
-	socket.port = SERVER_PORT;
-
-	iResult = Send(socket, buffer, buffSize);*/
 
 	if (iResult == -1) {
 

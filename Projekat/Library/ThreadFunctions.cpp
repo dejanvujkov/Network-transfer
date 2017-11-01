@@ -113,10 +113,6 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 				}
 			}
 
-
-			// KLIZAJUCI PROZOR		
-			//SlideOneMessage(header, tempbuffer, i, h);
-			// NEPOTREBNO ???
 		}
 
 		Algoritam(h);
@@ -152,7 +148,6 @@ DWORD WINAPI RecieveMessage(LPVOID param)
 
 	rMessageHeader* header = (rMessageHeader*)accessBuffer;
 	char* message = accessBuffer + sizeof(rMessageHeader);
-	// NEBITNO memset(accessBuffer, 0, ACCESS_BUFFER_SIZE);
 
 	// Prima svaki paket
 	while (clientInfo->messageSize - clientInfo->slider > 0)
@@ -213,9 +208,7 @@ DWORD WINAPI RecieveMessage(LPVOID param)
 	}
 
 	*(clientInfo->lock) = true;
-	//ReleaseSemaphore(*(clientInfo->lock), 1, NULL);
 	free(clientInfo->clientAddress);
-	//free(clientInfo);
 	free(accessBuffer);
 
 	free(clientInfo->buffer);
@@ -263,10 +256,6 @@ int Algoritam(rHelper* h)
 int SendOneMessage(rMessageHeader* header, int* idPoslednjePoslato, int* brojPaketa, int i, int velicinaPoruke, rHelper* h, int* trenutnoProcitano, int* procitano, char* tempbuffer)
 {
 	int iResult;
-	//Sleep(10);
-
-	/*if (h->slider == h->length)
-		printf("");*/
 
 	header->id = ++(*idPoslednjePoslato);
 
@@ -337,8 +326,6 @@ int RecvOneMessage(rHelper* h, char* tempbuffer, int i)
 
 int SlideOneMessage(rMessageHeader* header, char* tempbuffer, int i, rHelper* h)
 {
-	//header = (rMessageHeader*)(tempbuffer + i * sizeof(rMessageHeader));
-
 	// Ako je poruka dostavljena, brise se iz buffera
 	if (header->state == RECIEVED)
 	{
