@@ -135,3 +135,29 @@ int rDelete(Kruzni_Buffer * buffer, int size)
 
 	return tempSize;
 }
+
+int rResize(Kruzni_Buffer * buffer, int size)
+{
+	char *temp = (char*)malloc(size);
+	if (buffer->buffer_end - buffer->tail > buffer->taken) {
+		memcpy(temp, buffer->tail, buffer->taken);
+		free(buffer->buffer_start);
+		buffer->buffer_start = temp;
+	}
+	else {
+		//Ako ima prelamanja
+		memcpy(temp, buffer->tail,
+			buffer->buffer_end - buffer->tail);
+
+		memcpy(temp + (buffer->buffer_end - buffer->tail), buffer->buffer_start, buffer->taken - (buffer->buffer_end - buffer->tail));
+		free(buffer->buffer_start);
+
+		buffer->buffer_start = temp;
+	}
+
+	buffer->head = buffer->buffer_start + buffer->taken;
+	buffer->tail = buffer->buffer_start;
+	buffer->free = size - buffer->taken;
+
+	return 0;
+}

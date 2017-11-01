@@ -47,12 +47,6 @@ int main(int argc, char* argv[])
 	//SEND
 	iResult = Send(mySocket, buffer, buffSize, 0, (SOCKADDR*)&serverAddress, sockAddrLen);
 
-	/*rSocket socket;
-	socket.addr = SERVER_IP_ADDERESS;
-	socket.port = SERVER_PORT;
-
-	iResult = Send(socket, buffer, buffSize);*/
-
 	if (iResult == -1) {
 
 		printf("Doslo je do greske prilikom slanja paketa");

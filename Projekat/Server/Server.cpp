@@ -2,8 +2,6 @@
 
 int main(int argc, char* argv[])
 {
-	//HANDLE lock = CreateSemaphore(0, 1, 1, NULL);
-
 	bool lock = true;
 	DWORD timeout = 2 * 1000;
 	SOCKET serverSocket;
@@ -154,7 +152,6 @@ int Close(SOCKET serverSocket) {
 DWORD WINAPI RecieveMessage(LPVOID param)
 {
 	rClientMessage* clientInfo = (rClientMessage*)param;
-	//WaitForSingleObject(clientInfo->lock, INFINITE);
 
 	int id = 1;
 
@@ -170,7 +167,6 @@ DWORD WINAPI RecieveMessage(LPVOID param)
 
 	rMessageHeader* header = (rMessageHeader*)accessBuffer;
 	char* message = accessBuffer + sizeof(rMessageHeader);
-	// NEBITNO memset(accessBuffer, 0, ACCESS_BUFFER_SIZE);
 	
 	// Prima svaki paket
 	while (clientInfo->messageSize - clientInfo->slider != 0)
@@ -231,9 +227,7 @@ DWORD WINAPI RecieveMessage(LPVOID param)
 	}
 
 	*(clientInfo->lock) = true;
-	//ReleaseSemaphore(*(clientInfo->lock), 1, NULL);
 	free(clientInfo->clientAddress);
-	//free(clientInfo);
 	free(accessBuffer);
 
 	free(clientInfo->buffer);
