@@ -46,7 +46,9 @@ DWORD WINAPI SendThread(LPVOID param)
 				
 				procitano += trenutnoProcitano;
 
-				iResult = sendto(s->socket, tempBuffer, sizeof(rMessageHeader) + header->size, 0, (LPSOCKADDR)s->adresa, sizeof(s->sockAddrLen));
+				s->brojPoslednjePoslatih++;
+
+				iResult = sendto(s->socket, tempBuffer, sizeof(rMessageHeader) + header->size, 0, (LPSOCKADDR)(s->adresa), sizeof(sockaddr_in));
 				
 				if (iResult == SOCKET_ERROR)
 				{
@@ -86,7 +88,7 @@ DWORD WINAPI RecvThread(LPVOID param)
 
 	while (s->activeThreads)
 	{
-		iResult = recvfrom(s->socket, (char*)header, sizeof(rMessageHeader), 0, (LPSOCKADDR)s->adresa, &(s->sockAddrLen));
+		iResult = recvfrom(s->socket, tempBuffer, MAX_UDP_SIZE, 0, (LPSOCKADDR)s->adresa, &(s->sockAddrLen));
 		
 		// Ako je time out
 		if (iResult == SOCKET_ERROR)
@@ -157,8 +159,8 @@ DWORD WINAPI RecvThread(LPVOID param)
 		{
 			if (s->state == DISCONNECTED)
 				continue;
-			// Ako je podatak prima se ostatak poruke
-			iResult = recvfrom(s->socket, data, header->size, 0, (LPSOCKADDR)s->adresa, &(s->sockAddrLen));
+			//// Ako je podatak prima se ostatak poruke
+			//iResult = recvfrom(s->socket, data, header->size, 0, (LPSOCKADDR)s->adresa, &(s->sockAddrLen));
 			if (iResult == SOCKET_ERROR)
 			{
 				printf("DATA DATA recvfrom failed with error: %d\n", WSAGetLastError());
@@ -198,7 +200,7 @@ DWORD WINAPI RecvThread(LPVOID param)
 				memcpy(ackBuffer + ackCount * sizeof(rMessageHeader), header, sizeof(rMessageHeader));
 
 				// Ako je primio sve ocekivano ACK, odradi algoritam i daje dozvolu za slanje
-				if (ackCount == s->brojPoslednjePrimljenih)
+				if (ackCount == s->brojPoslednjePoslatih)
 				{
 					CountACKs(s, ackBuffer, ackCount);
 					Algoritam(s);
