@@ -46,6 +46,8 @@ int rResize(Kruzni_Buffer* buffer, int size)
 	buffer->head = buffer->buffer_start + buffer->taken;
 	buffer->tail = buffer->buffer_start;
 	buffer->free = size - buffer->taken;
+
+	return 0;
 }
 
 int rPush(Kruzni_Buffer * buffer, char * data, int size)

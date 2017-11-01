@@ -136,7 +136,6 @@
   <ItemGroup>
     <ClInclude Include="enums.h" />
     <ClInclude Include="header.h" />
-    <ClInclude Include="Initialize.h" />
     <ClInclude Include="KruzniBuffer.h" />
     <ClInclude Include="structs.h" />
     <ClInclude Include="ThreadHeaders.h" />
