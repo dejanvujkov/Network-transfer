@@ -2,8 +2,10 @@
 
 int main(int argc, char* argv[])
 {
+	//HANDLE lock = CreateSemaphore(0, 1, 1, NULL);
+
 	bool lock = true;
-	DWORD timeout = 2 * 1000;
+	DWORD timeout = WAIT_FOR_ACK_SEC * 1000;
 	SOCKET serverSocket;
 
 	sockaddr_in serverAddress;
@@ -145,113 +147,6 @@ int Close(SOCKET serverSocket) {
 	}
 
 	printf("Server successfully shut down.\n");
-
-	return 0;
-}
-
-DWORD WINAPI RecieveMessage(LPVOID param)
-{
-	rClientMessage* clientInfo = (rClientMessage*)param;
-
-	int id = 1;
-
-	int iResult;
-
-	int sockAddrLen = sizeof(struct sockaddr);
-
-	// Buffer za svaku poruku
-	char* accessBuffer;
-	accessBuffer = (char*)malloc(ACCESS_BUFFER_SIZE);
-	if (accessBuffer == NULL)
-		return 1;
-
-	rMessageHeader* header = (rMessageHeader*)accessBuffer;
-	char* message = accessBuffer + sizeof(rMessageHeader);
-	
-	// Prima svaki paket
-	while (clientInfo->messageSize - clientInfo->slider != 0)
-	{
-		iResult = recvfrom(clientInfo->socket, accessBuffer, ACCESS_BUFFER_SIZE, 0, (LPSOCKADDR)clientInfo->clientAddress, &sockAddrLen);
-
-		if (iResult == SOCKET_ERROR)
-		{
-			printf("\nrecvfrom failed with error: %d", WSAGetLastError());
-			continue;
-		}
-
-		if (header->state == REQUEST)
-		{
-			// Ako stigne request od drugog klijenta, salje se reject
-			header->state = REJECTED;
-
-			iResult = sendto(clientInfo->socket,
-				accessBuffer,
-				sizeof(rMessageHeader),
-				0,
-				(LPSOCKADDR)clientInfo->clientAddress,
-				sockAddrLen);
-
-			continue;
-		}
-
-		if (header->id != id)
-			header->state = DROPPED;
-		else
-			header->state = RECIEVED;
-
-		iResult = sendto(clientInfo->socket,
-			accessBuffer,
-			sizeof(rMessageHeader),
-			0,
-			(LPSOCKADDR)clientInfo->clientAddress,
-			sockAddrLen);
-
-		if (iResult == SOCKET_ERROR)
-		{
-			printf("\nrecvfrom failed with error: %d", WSAGetLastError());
-			continue;
-		}
-
-		if (header->id != id) 
-		{
-			printf("\n[%d] dropped, expected [%d]", header->id, id);
-			continue;
-		}
-
-		id++;
-		printf("\n[%d] Recieved: %d ", header->id, header->size);
-		memcpy(message, clientInfo->buffer, header->size);
-		clientInfo->slider += header->size;
-
-		printf("\t\tTotal: %d", clientInfo->slider);
-	}
-
-	*(clientInfo->lock) = true;
-	free(clientInfo->clientAddress);
-	free(accessBuffer);
-
-	free(clientInfo->buffer);
-
-	return 0;
-}
-
-int Receive(SOCKET socket, int messageLength, bool* lock, sockaddr_in* clientAddress, rClientMessage* info) {
-
-	char* messageBuffer = (char*)malloc(messageLength);
-
-	//Popunjavanje odgovarajucih polja
-	info->buffer = messageBuffer;
-	info->messageSize = messageLength;
-	info->slider = 0;
-	info->socket = socket;
-	info->clientAddress = clientAddress;
-	info->lock = lock;
-
-	// Primi celu poruku
-	*lock = false;
-	HANDLE thread = CreateThread(NULL, 0, RecieveMessage, info, 0, NULL);
-
-	WaitForSingleObject(thread, INFINITE);
 
 	return 0;
 }

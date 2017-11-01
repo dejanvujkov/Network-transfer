@@ -73,7 +73,7 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 		{
 			// SLANJE	
 			SendOneMessage(header, &idPoslednjePoslato, &brojPaketa, i, velicinaPoruke, h, &trenutnoProcitano, &procitano, tempbuffer);
-			Sleep(100); // Delay da server moze da isprati
+			//Sleep(100); // Delay da server moze da isprati
 		}
 
 		ReleaseSemaphore(h->lock, 1, NULL);
@@ -93,8 +93,30 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 
 		for (int i = 0; i <= brojPaketa; i++)
 		{
+
+			for (int j = 0; j <= brojPaketa + 1; j++)
+			{
+				header = (rMessageHeader*)(tempbuffer + j * sizeof(rMessageHeader));
+				// Ako nije nasao ocekivani paket, izlazi iz obe petlje
+				if (j == brojPaketa + 1)
+				{
+					// DOSLO JE DO DROPA
+					idPoslednjePoslato = idPoslednjePrimljeno;
+					break;
+				}
+				// Ako je nasao zeljeni paket, sliduje ga
+				if (header->id == idPoslednjePrimljeno + 1)
+				{
+					SlideOneMessage(header, tempbuffer, j, h); // proveri zakomentarisan header, mozda nepotrebni parametri
+					idPoslednjePrimljeno++;
+					break;
+				}
+			}
+
+
 			// KLIZAJUCI PROZOR		
-			SlideOneMessage(header, tempbuffer, i, h);
+			//SlideOneMessage(header, tempbuffer, i, h);
+			// NEPOTREBNO ???
 		}
 
 		Algoritam(h);
@@ -109,6 +131,96 @@ DWORD WINAPI SendDataFromBuffer(LPVOID param)
 	free(tempbuffer);
 
 	return h->slider;
+}
+
+DWORD WINAPI RecieveMessage(LPVOID param)
+{
+	rClientMessage* clientInfo = (rClientMessage*)param;
+	//WaitForSingleObject(clientInfo->lock, INFINITE);
+
+	int id = 1;
+
+	int iResult;
+
+	int sockAddrLen = sizeof(struct sockaddr);
+
+	// Buffer za svaku poruku
+	char* accessBuffer;
+	accessBuffer = (char*)malloc(MAX_UDP_SIZE);
+	if (accessBuffer == NULL)
+		return 1;
+
+	rMessageHeader* header = (rMessageHeader*)accessBuffer;
+	char* message = accessBuffer + sizeof(rMessageHeader);
+	// NEBITNO memset(accessBuffer, 0, ACCESS_BUFFER_SIZE);
+
+	// Prima svaki paket
+	while (clientInfo->messageSize - clientInfo->slider > 0)
+	{
+		iResult = recvfrom(clientInfo->socket, accessBuffer, MAX_UDP_SIZE, 0, (LPSOCKADDR)clientInfo->clientAddress, &sockAddrLen);
+
+		if (iResult == SOCKET_ERROR)
+		{
+			printf("\nrecvfrom failed with error: %d", WSAGetLastError());
+			continue;
+		}
+
+		if (header->state == REQUEST)
+		{
+			// Ako stigne request od drugog klijenta, salje se reject
+			header->state = REJECTED;
+
+			iResult = sendto(clientInfo->socket,
+				accessBuffer,
+				sizeof(rMessageHeader),
+				0,
+				(LPSOCKADDR)clientInfo->clientAddress,
+				sockAddrLen);
+
+			continue;
+		}
+
+		if (header->id != id)
+			header->state = DROPPED;
+		else
+			header->state = RECIEVED;
+
+		iResult = sendto(clientInfo->socket,
+			accessBuffer,
+			sizeof(rMessageHeader),
+			0,
+			(LPSOCKADDR)clientInfo->clientAddress,
+			sockAddrLen);
+
+		if (iResult == SOCKET_ERROR)
+		{
+			printf("\nrecvfrom failed with error: %d", WSAGetLastError());
+			continue;
+		}
+
+		if (header->id != id)
+		{
+			printf("\n[%d] dropped, expected [%d]", header->id, id);
+			continue;
+		}
+
+		id++;
+		printf("\n[%d] Recieved: %d ", header->id, header->size);
+		memcpy(message, clientInfo->buffer, header->size);
+		clientInfo->slider += header->size;
+
+		printf("\t\tTotal: %d", clientInfo->slider);
+	}
+
+	*(clientInfo->lock) = true;
+	//ReleaseSemaphore(*(clientInfo->lock), 1, NULL);
+	free(clientInfo->clientAddress);
+	//free(clientInfo);
+	free(accessBuffer);
+
+	free(clientInfo->buffer);
+
+	return 0;
 }
 
 int Algoritam(rHelper* h)
@@ -127,6 +239,9 @@ int Algoritam(rHelper* h)
 		// Ako je u Tahoe modu
 		else
 		{
+			// TREBA GA JOS MALO SMANJITI
+			if (h->cwnd <= h->ssthresh + h->ssthresh/10)
+				h->ssthresh /= 2;
 			// swnd se vraca na ssthresh
 			h->cwnd = h->ssthresh;
 		}
@@ -148,7 +263,10 @@ int Algoritam(rHelper* h)
 int SendOneMessage(rMessageHeader* header, int* idPoslednjePoslato, int* brojPaketa, int i, int velicinaPoruke, rHelper* h, int* trenutnoProcitano, int* procitano, char* tempbuffer)
 {
 	int iResult;
-	Sleep(10);
+	//Sleep(10);
+
+	/*if (h->slider == h->length)
+		printf("");*/
 
 	header->id = ++(*idPoslednjePoslato);
 
@@ -219,7 +337,7 @@ int RecvOneMessage(rHelper* h, char* tempbuffer, int i)
 
 int SlideOneMessage(rMessageHeader* header, char* tempbuffer, int i, rHelper* h)
 {
-	header = (rMessageHeader*)(tempbuffer + i * sizeof(rMessageHeader));
+	//header = (rMessageHeader*)(tempbuffer + i * sizeof(rMessageHeader));
 
 	// Ako je poruka dostavljena, brise se iz buffera
 	if (header->state == RECIEVED)
