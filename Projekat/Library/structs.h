@@ -49,35 +49,3 @@ typedef struct rMessageHeader {
 	int id;					// Oznaka poruke
 	int size;				// Velicina poruke
 } rMessageHeader;
-
-
-////////////////
-//
-//
-//typedef struct rHelper {
-//	char* data;				// Pokazivac na podatke
-//	int length;				// Duzina podataka za slanje
-//	int slider;				// Duzina podataka prebacenih na buffer
-//
-//	int cwnd;				// Duzina trenutne poruke			// Algoritam
-//	int ssthresh;			// Minimalna sigurna duzina poruke  // Algoritam
-//	int recv;				// Duzina primljene poruke			// Algoritam
-//	bool slowstart;			// Slowstart = true / Tahoe = false	// Algoritam
-//
-//	rConnectionState state;	// Stanje konekcije
-//	Kruzni_Buffer buffer;	// Kruzni buffer za smestanje poruke
-//	HANDLE lock;			// Lock objekat za zakljucavanje strukture
-//	
-//	int sockAddrLen;		// Duzina adrese
-//	SOCKET* socket;			// SOCKET za slanje
-//	sockaddr_in* adresa;	// Adresa servera
-//} rHelper;
-//
-//typedef struct rClientMessage {
-//	char* buffer;
-//	int slider;
-//	int messageSize;
-//	sockaddr_in* clientAddress;
-//	SOCKET socket;
-//	bool* lock;
-//} rClientMessage;

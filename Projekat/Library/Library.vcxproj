@@ -141,8 +141,6 @@
     <ClInclude Include="ThreadHeaders.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Connect.cpp" />
-    <ClCompile Include="Initialize.cpp" />
     <ClCompile Include="KruzniBuffer.cpp" />
     <ClCompile Include="SendRecv.cpp" />
     <ClCompile Include="ThreadFunctions.cpp" />
