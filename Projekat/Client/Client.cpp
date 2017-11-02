@@ -3,7 +3,7 @@
 // UDP client that uses blocking sockets
 int main(int argc, char* argv[])
 {
-	int buffSize = 50000000;
+	int buffSize = 300 * 1024 * 1024;
 	int* a;
 	int* buffer;
 	buffer = (int*)malloc(buffSize);
@@ -23,14 +23,8 @@ int main(int argc, char* argv[])
 	rConnect(socket, SERVER_IP_ADDERESS, SERVER_PORT);
 
 	rSend(socket, (char*)buffer, buffSize);
-	printf("aa");
-	getchar();
-	rRecv(socket, (char*)buffer, buffSize);
 
 	getchar();
-
-
-
 
 	if (iResult == -1) {
 

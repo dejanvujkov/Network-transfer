@@ -3,19 +3,14 @@
 int main(int argc, char* argv[])
 {
 	rSocket * socket = rInitialize();
-	
-	socket->adresa->sin_family = AF_INET;
-	socket->adresa->sin_addr.s_addr = INADDR_ANY;
-	socket->adresa->sin_port = htons((u_short)SERVER_PORT);
 
-	bind(socket->socket, (LPSOCKADDR)socket->adresa, socket->sockAddrLen);
+	rAccept(socket, SERVER_PORT);
 
-	char* data = (char*)malloc(50000000);
+	int size = 300 * 1024 * 1024;
+	char* data = (char*)malloc(size);
 
-	rRecv(socket, data, 50000000);
-	printf("aa");
-	getchar();
-	rSend(socket, data, 50000000);
+	rRecv(socket, data, size);
+
 	getchar();
 
 	return 0;
