@@ -33,9 +33,6 @@
     <ClInclude Include="ThreadHeaders.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Initialize.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SendRecv.cpp">
@@ -45,12 +42,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ThreadFunctions.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Initialize.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Connect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

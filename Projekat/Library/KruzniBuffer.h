@@ -3,6 +3,7 @@
 
 void rInitBuffer(Kruzni_Buffer* buffer, int size);
 void rFreeBuffer(Kruzni_Buffer* buffer);
+int rResize(Kruzni_Buffer* buffer, int size);
 
 int rPush(Kruzni_Buffer * buffer, char* data, int size);
 int rPop(Kruzni_Buffer * buffer, char* data, int size);
