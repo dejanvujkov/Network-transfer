@@ -148,11 +148,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Inicijalizacija.cpp" />
     <ClCompile Include="Server.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Inicijalizacija.h" />
     <ClInclude Include="Server.h" />
   </ItemGroup>
   <ItemGroup>

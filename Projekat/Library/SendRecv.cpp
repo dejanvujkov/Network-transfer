@@ -3,7 +3,6 @@
 rSocket* rInitialize()
 {
 	int iResult = 0;
-	DWORD timeout = TIMEOUT_SEC;
 
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
@@ -20,8 +19,6 @@ rSocket* rInitialize()
 	s->socket = socket(AF_INET,
 		SOCK_DGRAM,
 		IPPROTO_UDP);
-
-	setsockopt(s->socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
 
 	s->adresa = (sockaddr_in*)calloc(0, sizeof(sockaddr_in));
 	if (s->adresa == NULL)
@@ -84,6 +81,10 @@ int rConnect(rSocket* s, char* serverAddress, short port)
 	(s->adresa)->sin_addr.s_addr = inet_addr(serverAddress);
 	(s->adresa)->sin_port = htons((u_short)port);
 
+	DWORD timeout = TIMEOUT_SEC;
+
+	setsockopt(s->socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
+
 	rMessageHeader header;
 	header.type = REQUEST;
 	header.id = 0;
@@ -92,32 +93,24 @@ int rConnect(rSocket* s, char* serverAddress, short port)
 	iResult = sendto(s->socket, (char*)&header, sizeof(rMessageHeader), 0, (LPSOCKADDR)s->adresa, s->sockAddrLen);
 	if (iResult == SOCKET_ERROR)
 	{
-		printf("recvfrom failed with error: %d\n", WSAGetLastError());
+		printf("//recvfrom failed with error: %d\n", WSAGetLastError());
 		return -1;
 	}
 
 	return 0;
 }
 
-int rAccept(rSocket* s)
+int rAccept(rSocket* s, short port)
 {
-	int iResult;
-	rMessageHeader header;
-	header.type = ACCEPT;
-	header.id = 0;
-	header.size = 0;
+	DWORD timeout = TIMEOUT_SEC;
 
-	iResult = sendto(s->socket, (char*)&header, sizeof(rMessageHeader), 0, (LPSOCKADDR)s->adresa, s->sockAddrLen);
+	s->adresa->sin_family = AF_INET;
+	s->adresa->sin_addr.s_addr = INADDR_ANY;
+	s->adresa->sin_port = htons((u_short)port);
 
-	if (iResult == SOCKET_ERROR)
-	{
-		printf("recvfrom failed with error: %d\n", WSAGetLastError());
-		s->state = DISCONNECTED;
-		return -1;
-	}
+	bind(s->socket, (LPSOCKADDR)s->adresa, s->sockAddrLen);
 
-	s->state = CONNECTED;
-	
+	setsockopt(s->socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
 
 	return 0;
 }
@@ -133,19 +126,17 @@ int rSend(rSocket* s, char* data, int len)
 		continue;
 	}
 
+	while (s->sendBuffer->free < len)
 	{
-		while (s->sendBuffer->free < len)
-		{
-			iResult = rResize(s->sendBuffer, (s->sendBuffer->buffer_end - s->sendBuffer->buffer_start) * 2);
-		}
+		iResult = rResize(s->sendBuffer, (s->sendBuffer->buffer_end - s->sendBuffer->buffer_start) * 2);
+	}
 
-		iResult = rPush(s->sendBuffer, data, len);
+	iResult = rPush(s->sendBuffer, data, len);
 
-		if (iResult != len)
-		{
-			printf("nije pushovano na buffer");
-			return -1;
-		}
+	if (iResult != len)
+	{
+		printf("nije pushovano na buffer");
+		return -1;
 	}
 
 	return 0;
@@ -161,9 +152,6 @@ int rRecv(rSocket* s, char* data, int len)
 	} while (iResult != len);
 
 	printf("SVE SA BUFFERA %d", iResult);
-
-	getchar();
-
 
 	return iResult;
 }

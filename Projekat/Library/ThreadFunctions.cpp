@@ -49,7 +49,6 @@ DWORD WINAPI SendThread(LPVOID param)
 				
 				procitano += trenutnoProcitano;
 
-
 				iResult = sendto(s->socket, tempBuffer, sizeof(rMessageHeader) + header->size, 0, (LPSOCKADDR)(s->adresa), sizeof(sockaddr_in));
 				
 				if (iResult == SOCKET_ERROR)
@@ -82,11 +81,14 @@ DWORD WINAPI RecvThread(LPVOID param)
 	rMessageHeader* header = (rMessageHeader*)tempBuffer;
 	char* data = tempBuffer + sizeof(rMessageHeader);
 
-	char* ackBuffer = (char*)malloc(100 * sizeof(rMessageHeader));
+	char* ackBuffer = (char*)malloc(2000 * sizeof(rMessageHeader));
 	int ackCount = 0;
 
 	while (s->activeThreads)
 	{
+		if (s->adresa->sin_port == ntohs(0))
+			continue;
+
 		iResult = recvfrom(s->socket, tempBuffer, MAX_UDP_SIZE, 0, (LPSOCKADDR)s->adresa, &(s->sockAddrLen));
 		
 		// Ako je time out
@@ -95,7 +97,7 @@ DWORD WINAPI RecvThread(LPVOID param)
 			iResult = WSAGetLastError();
 			if (iResult != 10060)
 			{
-				printf("\nrecvfrom failed with error: %d\n", iResult);
+				//printf("\nrecvfrom failed with error: %d\n", iResult);
 				continue;
 			}
 			else
@@ -140,7 +142,7 @@ DWORD WINAPI RecvThread(LPVOID param)
 
 			if (iResult == SOCKET_ERROR)
 			{
-				printf("recvfrom failed with error: %d\n", WSAGetLastError());
+				//printf("recvfrom failed with error: %d\n", WSAGetLastError());
 				s->state = DISCONNECTED;
 				continue;
 			}
@@ -161,12 +163,6 @@ DWORD WINAPI RecvThread(LPVOID param)
 			if (s->state == DISCONNECTED)
 				continue;
 
-			if (iResult == SOCKET_ERROR)
-			{
-				printf("DATA DATA recvfrom failed with error: %d\n", WSAGetLastError());
-				continue;
-			}
-
 			while (s->recvBuffer->free < header->size)
 			{
 				iResult = rResize(s->recvBuffer, (s->recvBuffer->buffer_end - s->recvBuffer->buffer_start) * 2);
@@ -179,7 +175,7 @@ DWORD WINAPI RecvThread(LPVOID param)
 
 			rPush(s->recvBuffer, data, header->size);
 
-			printf("\nrecieved b: %d ", header->size);
+			printf("\n [%d] Recieved B: %d ", header->id, header->size);
 
 			header->type = ACK;
 
@@ -199,10 +195,10 @@ DWORD WINAPI RecvThread(LPVOID param)
 			if (s->timedOut)
 				continue;
 
-			ackCount++;
 			memcpy(ackBuffer + ackCount * sizeof(rMessageHeader), header, sizeof(rMessageHeader));
+			ackCount++;
 
-			printf("PRIMIO ACK %d", header->id);
+			printf("\nACK [%d]", header->id);
 
 			// Ako je primio sve ocekivano ACK, odradi algoritam i daje dozvolu za slanje
 			if (ackCount == s->brojPoslednjePoslatih)
@@ -219,9 +215,6 @@ DWORD WINAPI RecvThread(LPVOID param)
 		default:
 			break;
 		}
-
-		//zaglavi u recv
-		//kada primi vidi sta ces
 	}
 
 	free(tempBuffer);
@@ -230,6 +223,7 @@ DWORD WINAPI RecvThread(LPVOID param)
 	return 0;
 }
 
+//Obrada ACK
 void CountACKs(rSocket* s, char* ackBuffer, int ackCount)
 {
 	rMessageHeader* header;
