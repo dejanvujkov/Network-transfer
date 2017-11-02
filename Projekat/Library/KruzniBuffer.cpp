@@ -19,6 +19,35 @@ void rFreeBuffer(Kruzni_Buffer * buffer)
 	free(buffer->buffer_start);
 }
 
+int rResize(Kruzni_Buffer* buffer, int size)
+{
+	char* temp = (char*)malloc(size);
+	if (temp == NULL)
+		return -1;
+
+	if (buffer->buffer_end - buffer->tail > buffer->taken)
+	{
+		// Ako nema prelamanja
+		memcpy(temp, buffer->tail, buffer->taken);
+	}
+	else
+	{
+		// Ako ima prelamanja
+		memcpy(temp, buffer->tail, buffer->buffer_end - buffer->tail);
+		memcpy(temp + (buffer->buffer_end - buffer->tail), buffer->buffer_start, buffer->taken - (buffer->buffer_end - buffer->tail));
+	}
+
+	free(buffer->buffer_start);
+	buffer->buffer_start = temp;
+	buffer->buffer_end = buffer->buffer_start + size;
+
+	buffer->head = buffer->buffer_start + buffer->taken;
+	buffer->tail = buffer->buffer_start;
+	buffer->free = size - buffer->taken;
+
+	return 0;
+}
+
 int rPush(Kruzni_Buffer * buffer, char * data, int size)
 {
 	// Ako ne moze da stane vrati gresku

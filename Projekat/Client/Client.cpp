@@ -3,60 +3,28 @@
 // UDP client that uses blocking sockets
 int main(int argc, char* argv[])
 {
-	int buffSize = 500000000;
-	char* buffer;
-	buffer = (char*)malloc(buffSize);
+	int buffSize = 300 * 1024 * 1024;
+	int* a;
+	int* buffer;
+	buffer = (int*)malloc(buffSize);
 	if (buffer == NULL)
 		return 1;
-	memset(buffer, 77, buffSize);
-
-	WSADATA wsaData;
-	int iResult = 0;
-	// Initialize windows sockets library for this process
-	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+	//memset(buffer, 77, buffSize);
+	for (int i = 1; i <= buffSize / 4;i++)
 	{
-		printf("WSAStartup failed with error: %d\n", WSAGetLastError());
-		return 1;
+		buffer[i] = i;
 	}
+		
 
-	SOCKET mySocket = INVALID_SOCKET;
-	mySocket = socket(AF_INET,
-		SOCK_DGRAM,
-		IPPROTO_UDP);
+	int iResult = 0;
 
-	sockaddr_in serverAddress;
-	memset((char*)&serverAddress, 0, sizeof(serverAddress));
-	serverAddress.sin_family = AF_INET;
-	//serverAddress.sin_addr.s_addr = inet_addr(SERVER_IP_ADDERESS);
-	serverAddress.sin_addr.s_addr = inet_addr("192.168.101.251");
-	serverAddress.sin_port = htons((u_short)SERVER_PORT);
+	rSocket* socket = rInitialize();
 
-	int sockAddrLen = sizeof(struct sockaddr);
+	rConnect(socket, SERVER_IP_ADDERESS, SERVER_PORT);
 
-	//CONNECT
-	int SleepTime = 500;
-	do {
-		iResult = Connect(mySocket, (SOCKADDR*)&serverAddress, sizeof(serverAddress), buffSize);
-		if (iResult == -1)
-		{
-			SleepTime *= 2;
-			printf("\nTrying again in %d sec.\n", SleepTime/1000);
-			Sleep(SleepTime);
-			//getchar();
-			//return 1;
-		}
-	} while (iResult == -1);
-
-	//SEND
-	iResult = Send(mySocket, buffer, buffSize, 0, (SOCKADDR*)&serverAddress, sockAddrLen);
-
+	rSend(socket, (char*)buffer, buffSize);
 
 	getchar();
-	/*rSocket socket;
-	socket.addr = SERVER_IP_ADDERESS;
-	socket.port = SERVER_PORT;
-
-	iResult = Send(socket, buffer, buffSize);*/
 
 	if (iResult == -1) {
 

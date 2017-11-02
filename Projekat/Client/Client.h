@@ -8,10 +8,8 @@
 #include "../Library/header.h"
 
 #define SERVER_PORT 15000
-#define OUTGOING_BUFFER_SIZE 1024
+//#define SERVER_IP_ADDERESS "192.168.101.251"
+#define SERVER_IP_ADDERESS "127.0.0.1"
 
 bool InitializeWindowsSockets();
 
-// for demonstration purposes we will hard code
-// local host ip adderss
-#define SERVER_IP_ADDERESS "127.0.0.1"
