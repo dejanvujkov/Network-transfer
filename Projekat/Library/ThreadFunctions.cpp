@@ -5,16 +5,11 @@ DWORD WINAPI SendThread(LPVOID param)
 	/*  */
 	rSocket* s = (rSocket*)param;
 
-	/* Flag greske */
-	int iResult;
-
-	/* Buffer za UDP poruku */
-	char* tempBuffer = (char*)malloc(MAX_UDP_SIZE);
-
-	/* Pokazivac na HEADER deo poruke */
-	rMessageHeader* header = (rMessageHeader*)tempBuffer;
-	/* Pokazivac na DATA deo poruke */
-	char* data = tempBuffer + sizeof(rMessageHeader);
+	int iResult;		/* Flag greske */	
+	char* tempBuffer = (char*)malloc(MAX_UDP_SIZE);				/* Buffer za UDP poruku */
+	
+	rMessageHeader* header = (rMessageHeader*)tempBuffer;		/* Pokazivac na HEADER deo poruke */	
+	char* data = tempBuffer + sizeof(rMessageHeader);			/* Pokazivac na DATA deo poruke */
 
 	/* Pomocni podaci za upravljanje paketima */
 	int brojPaketa;												/* Broj poruka koje se salju u jednoj iteraciji */
@@ -36,7 +31,7 @@ DWORD WINAPI SendThread(LPVOID param)
 		 */
 		if (s->sendBuffer->taken > 0 && s->state == CONNECTED && s->canSend)
 		{
-			brojPaketa = (s->cwnd) / velicinaPoruke;		/* Racunanje broja poruka u iteraciji */
+			brojPaketa = (s->cwnd) / velicinaPoruke;				/* Racunanje broja poruka u iteraciji */
 			printf("\n-- Salje se %d poruka --", brojPaketa + 1);	/* info */
 			/* Resetovanje statusnih podataka */
 			procitano = 0;
@@ -70,8 +65,6 @@ DWORD WINAPI SendThread(LPVOID param)
 
 				/* Slanje poruke */
 				iResult = sendto(s->socket, tempBuffer, sizeof(rMessageHeader) + header->size, 0, (LPSOCKADDR)(s->adresa), sizeof(sockaddr_in));
-				
-				printf("DBG: %d %x", header->id, *data);
 
 				if (iResult == SOCKET_ERROR)
 				{
@@ -91,28 +84,31 @@ DWORD WINAPI SendThread(LPVOID param)
 		}			
 	}
 
+	/* Free buffer koriscen za primanje poruka */
 	free(tempBuffer);
 
 	return 0;
 }
+
 DWORD WINAPI RecvThread(LPVOID param)
 {
-	int iResult;
-
 	rSocket* s = (rSocket*)param;
-
-	// Buffer za UDP poruku
-	char* tempBuffer = (char*)malloc(MAX_UDP_SIZE);
-	// Pokazivaci na podatke
-	rMessageHeader* header = (rMessageHeader*)tempBuffer;
-	char* data = tempBuffer + sizeof(rMessageHeader);
-
-	char* ackBuffer = (char*)malloc(2000 * sizeof(rMessageHeader));
-	int ackCount = 0;
+	
+	int iResult;		/* Flag greske */
+	char* tempBuffer = (char*)malloc(MAX_UDP_SIZE);						/* Buffer za UDP poruku */
+		
+	rMessageHeader* header = (rMessageHeader*)tempBuffer;				/* Pokazivac na HEADER deo poruke */	
+	char* data = tempBuffer + sizeof(rMessageHeader);					/* Pokazivac na DATA deo poruke */
+	
+	/* Pomocni podaci za upravljanje paketima */
+	char* ackBuffer = (char*)malloc(2000 * sizeof(rMessageHeader));		/* Buffer za ACK poruke */	
+	int ackCount = 0;													/* Brojac ACK poruka */
 
 	WaitForSingleObject(s->lock, INFINITE);
+	/* Thread ostaje aktivan dokle god je rSocket::activeThreads = true */
 	while (s->activeThreads)
 	{
+		/* Ako rAccept nije zavrsio */
 		if (s->adresa->sin_port == ntohs(0))
 		{
 			continue;
@@ -120,22 +116,26 @@ DWORD WINAPI RecvThread(LPVOID param)
 		}
 
 		ReleaseSemaphore(s->lock, 1, NULL);
+		/* Oslobadja semafor dok ceka na poruku */
 		iResult = recvfrom(s->socket, tempBuffer, MAX_UDP_SIZE, 0, (LPSOCKADDR)s->adresa, &(s->sockAddrLen));
 		
-		// Ako je time out
+		/* Recv ERROR */
 		if (iResult == SOCKET_ERROR)
 		{
 			iResult = WSAGetLastError();
+			/* Ako je bilo koja greska osim Timeout */
 			if (iResult != 10060)
 			{
 				//printf("\nrecvfrom failed with error: %d\n", iResult);
 				continue;
 			}
+			/* Ako je Timeout */
 			else
 			{
-				printf("\nTIME OUT");
+				printf("\n-- TIME OUT --");
 				WaitForSingleObject(s->lock, INFINITE);
-				//if (s->brojPoslednjePrimljenih < s->brojPoslednjePoslatih)
+
+				/* Ako ima ACK-ova za obradjivanje */
 				if (ackCount > 0)
 				{
 					s->canSend = false;
@@ -146,17 +146,18 @@ DWORD WINAPI RecvThread(LPVOID param)
 					ackCount = 0;
 					s->canSend = true;
 				}
-				ReleaseSemaphore(s->lock, 1, NULL);
 				continue;
 			}
 		}
 
 		WaitForSingleObject(s->lock, INFINITE);
-		// Ako je primljena poruka gleda se tip poruke
+
+		/* Gleda tip primljene poruke */
 		switch (header->type)
 		{
 		case REQUEST:
 		{
+			/* Ukoliko jos nije uspostavljena veza */
 			if (s->state == DISCONNECTED)
 			{
 				header->type = ACCEPT;
@@ -165,6 +166,7 @@ DWORD WINAPI RecvThread(LPVOID param)
 
 				s->state = CONNECTED;
 			}
+			/* Ukoliko je veza uspostavljena sa nekim */
 			else
 			{
 				header->type = REJECT;
@@ -172,6 +174,7 @@ DWORD WINAPI RecvThread(LPVOID param)
 				header->size = 0;
 			}
 
+			/* Slanje odgovora klijentu */
 			iResult = sendto(s->socket, (char*)header, sizeof(rMessageHeader), 0, (LPSOCKADDR)s->adresa, s->sockAddrLen);
 
 			if (iResult == SOCKET_ERROR)
@@ -192,11 +195,13 @@ DWORD WINAPI RecvThread(LPVOID param)
 			s->state = DISCONNECTED;
 			break;
 		}
+		/* Ako su primljeni podaci */
 		case DATA:
 		{
 			if (s->state == DISCONNECTED)
 				continue;
 
+			/* Povecava recv kruzni buffer dok ne bude dovoljno velik da primi poruku */
 			while (s->recvBuffer->free < header->size)
 			{
 				iResult = rResize(s->recvBuffer, (s->recvBuffer->buffer_end - s->recvBuffer->buffer_start) * 2);
@@ -207,13 +212,15 @@ DWORD WINAPI RecvThread(LPVOID param)
 				}
 			}
 
+			/* Stavlja poruku na buffer */
 			rPush(s->recvBuffer, data, header->size);
 
 			printf("\n [%d] Recieved B: %d ", header->id, header->size);
-			printf("DBG: %d %x", header->id, *data);
 
+			/* Menja tip header-a poruke */
 			header->type = ACK;
 
+			/* Salje ACK sa podacima primljene poruke */
 			iResult = sendto(s->socket, (char*)header, sizeof(rMessageHeader), 0, (LPSOCKADDR)s->adresa, s->sockAddrLen);
 			if (iResult == SOCKET_ERROR)
 			{
@@ -222,6 +229,7 @@ DWORD WINAPI RecvThread(LPVOID param)
 			}
 			break;
 		}
+		/* Ako je primljen ACK */
 		case ACK:
 		{
 			if (s->state == DISCONNECTED)
@@ -230,12 +238,13 @@ DWORD WINAPI RecvThread(LPVOID param)
 			if (s->timedOut)
 				continue;
 
+			/* Smesta ACK u buffer i povecava count za 1 */
 			memcpy(ackBuffer + ackCount * sizeof(rMessageHeader), header, sizeof(rMessageHeader));
 			ackCount++;
 
 			printf("\nACK [%d]", header->id);
 
-			// Ako je primio sve ocekivano ACK, odradi algoritam i daje dozvolu za slanje
+			/* Ako su primljeni svi ACK-ovi bice obradjeni bez cekanja Timeout-a */
 			if (ackCount == s->brojPoslednjePoslatih)
 			{
 				s->canSend = false;
@@ -255,25 +264,28 @@ DWORD WINAPI RecvThread(LPVOID param)
 		WaitForSingleObject(s->lock, INFINITE);
 	}
 
+	/* Oslobadjanje zauzetih buffera */
 	free(tempBuffer);
 	free(ackBuffer);
 
 	return 0;
 }
 
-//Obrada ACK
 void CountACKs(rSocket* s, char* ackBuffer, int ackCount)
 {
 	rMessageHeader* header;
 
+	/* Prolazi kroz sve ACK poruke */
 	for (int i = 0; i < ackCount; i++)
 	{
 		for (int j = 0; j < ackCount + 1; j++)
 		{
 			header = (rMessageHeader*)(ackBuffer + j * sizeof(rMessageHeader));
+			/* Ako nije pronasao ACK ocekivanog paketa odbacuje sve preostale */
 			if (j == ackCount + 1)
 				return;
 
+			/* Ako je pronadjen ACk ocekivanog paketa, obradjuje se */
 			if (header->id == s->idOcekivanog)
 			{
 				s->recv += header->size;
@@ -284,15 +296,16 @@ void CountACKs(rSocket* s, char* ackBuffer, int ackCount)
 		}
 	}
 
+	/* Podesava ID poslednje poslatog da bude poslednji uspesno obradjen */
 	s->idPoslednjePoslato = s->idOcekivanog - 1;
 }
 
 int Algoritam(rSocket* s)
 {
-	// Ako je primljeno manje nego poslato
+	/* Ako je doslo do gubitka podataka */
 	if (s->recv < s->cwnd)
 	{
-		// Ako je u slowstart modu
+		/* Ako je u SlowStart modu smanjuje cwnd 2x i postavlja ssthresh*/
 		if (s->slowstart)
 		{
 			// postavlja se ssthresh i cwnd = ssthresh
@@ -300,23 +313,23 @@ int Algoritam(rSocket* s)
 			s->cwnd = s->ssthresh;
 			s->slowstart = false;
 		}
-		// Ako je u Tahoe modu
+		/* Ako je u Tahoe modu vraca cwnd na ssthresh*/
 		else
 		{
-			// TREBA GA JOS MALO SMANJITI
-			if (s->cwnd <= s->ssthresh + s->ssthresh / 10)
+			/* *DODATAK* Ako nije mnogo odmakao od poslednjeg smanjenja, smanjuje ga opet  */
+			if (s->cwnd <= s->ssthresh + s->ssthresh / 50)	// 100 - 102 % od ssthresh
 				s->ssthresh /= 2;
-			// swnd se vraca na ssthresh
+			/* Vraca cwnd na ssthresh */
 			s->cwnd = s->ssthresh;
 		}
 	}
-	// Ako je primljeno isto kao poslato
+	/* Ako je primljeno koliko je ocekivano */
 	else
 	{
-		// Slowstart -> cwnd * 2
+		/* Ako je u SlowStart modu povecava cwnd 2x*/
 		if (s->slowstart)
 			s->cwnd *= 2;
-		// Tahoe -> cwnd + 1
+		/* Ako je u Tahoe modu povecava cwnd za 1*/
 		else
 			s->cwnd += 1;
 	}

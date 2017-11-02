@@ -15,9 +15,44 @@
 #include "ThreadHeaders.h"
 #include "structs.h"
 
+/**
+* Inicijalizuje rSocket i vraca pokazivac na njega
+*/
 rSocket* rInitialize();
+
+/**
+* Deinicijalizuje rSocket i oslobadja memoriju
+* @param s - Pokazivac na rSocket strukturu
+*/
 int rDeinitialize(rSocket* s);
+
+/**
+* Podesava IP adresu i Port servera, podesava timeout i salje REQUEST
+* @param s - Pokazivac na rSocket strukturu
+* @param serverAddress - Pokazivac na adresu servera
+* @param port - Port servera
+*/
 int rConnect(rSocket* s, char* serverAddress, short port);
+
+/**
+* Podesava IP adresu servera na INADDR_ANY, podesava Port, binduje SOCKET i pdesava timeout
+* @param s - Pokazivac na rSocket strukturu
+* @param port - Port servera
+*/
 int rAccept(rSocket* s, short port);
+
+/**
+* Stavlja podatke sa data na send buffer
+* @param s - Pokazivac na rSocket strukturu
+* @param data - Pokazivac na podatke
+* @param len - velicina podataka
+*/
 int rSend(rSocket* s, char* data, int len);
+
+/**
+* Stavlja podatke sa recv buffera na data
+* @param s - Pokazivac na rSocket strukturu
+* @param data - Pokazivac na buffer
+* @param len - velicina podataka
+*/
 int rRecv(rSocket* s, char* data, int len);
