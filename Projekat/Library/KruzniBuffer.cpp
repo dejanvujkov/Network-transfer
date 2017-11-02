@@ -1,46 +1,55 @@
+/**
+ * KruzniBuffer.cpp Omogucuje metode za upravljanje kruznim bufferom
+ */
+
 #include "header.h"
 
-// Inicijalizacija kruznog buffera
 void rInitBuffer(Kruzni_Buffer * buffer, int size)
 {
+	/* Alociranje memorije za buffer */
 	buffer->buffer_start = (char*)malloc(size);
-	buffer->buffer_end = buffer->buffer_start + size;
 
+	/* Pomeranje pokazivaca */
+	buffer->buffer_end = buffer->buffer_start + size;
 	buffer->head = buffer->buffer_start;
 	buffer->tail = buffer->buffer_start;
 
+	/* Promena stanja buffera */
 	buffer->free = size;
 	buffer->taken = 0;
 }
 
-// Oslobadjanje buffera
 void rFreeBuffer(Kruzni_Buffer * buffer)
 {
+	/* Oslobadjanje memorije buffera */
 	free(buffer->buffer_start);
 }
 
 int rResize(Kruzni_Buffer* buffer, int size)
 {
+	/* Pokusaj zauzimanja memorije za buffer */
 	char* temp = (char*)malloc(size);
 	if (temp == NULL)
 		return -1;
 
+	/* Ako nema prelamanja buffera kopiraju se postojeci podaci od jednom */
 	if (buffer->buffer_end - buffer->tail > buffer->taken)
 	{
-		// Ako nema prelamanja
 		memcpy(temp, buffer->tail, buffer->taken);
 	}
+	/* Ako ima prelamanja buffera kopiraju se postojeci podaci iz dva puta */
 	else
 	{
-		// Ako ima prelamanja
 		memcpy(temp, buffer->tail, buffer->buffer_end - buffer->tail);
 		memcpy(temp + (buffer->buffer_end - buffer->tail), buffer->buffer_start, buffer->taken - (buffer->buffer_end - buffer->tail));
 	}
 
+	/* Oslobadjanje stare lokacije */
 	free(buffer->buffer_start);
+
+	/* Prebacivanje pokazivaca */
 	buffer->buffer_start = temp;
 	buffer->buffer_end = buffer->buffer_start + size;
-
 	buffer->head = buffer->buffer_start + buffer->taken;
 	buffer->tail = buffer->buffer_start;
 	buffer->free = size - buffer->taken;
@@ -50,25 +59,25 @@ int rResize(Kruzni_Buffer* buffer, int size)
 
 int rPush(Kruzni_Buffer * buffer, char * data, int size)
 {
-	// Ako ne moze da stane vrati gresku
+	/* Ako nema dovoljno prostora vrati gresku */
 	if (size > buffer->free)
 		return -1;
 
-	// Velicina podataka koja se dodaje u buffer
+	/* Velicina podataka koja se ubacuje u buffer */
 	int tempSize;
 	if (size <= buffer->free)
 		tempSize = size;
 	else
 		tempSize = buffer->free;
 
-	// Ako nema prelamanja podataka samo se kopira
+	/* Ako nema prelamanja podataka kopiraju se podaci od jednom */
 	if ((buffer->buffer_end - buffer->head) >= tempSize)
 	{
 		memcpy(buffer->head, data, tempSize);
 
 		buffer->head += tempSize;
 	}
-	// Ako ima prelamanja, podaci se dele na pocetak i kraj
+	/* Ako ima prelamanja podataka kopiraju se podaci iz dva puta */
 	else
 	{
 		int temp = buffer->buffer_end - buffer->head;
@@ -79,6 +88,7 @@ int rPush(Kruzni_Buffer * buffer, char * data, int size)
 		buffer->head = buffer->buffer_start + (tempSize - temp);
 	}
 
+	/* Promena stanja buffera */
 	buffer->free -= tempSize;
 	buffer->taken += tempSize;
 
@@ -87,19 +97,20 @@ int rPush(Kruzni_Buffer * buffer, char * data, int size)
 
 int rPop(Kruzni_Buffer * buffer, char * data, int size)
 {
-	// Maksimalna velicina podataka koja se uzima
+	/* Velicina podataka koja se uzima iz buffera */
 	int tempSize;
-	if (size <= buffer->taken)			// Ako se trazi bar onoliko koliko ima / 100 : 200 -> 100
+	if (size <= buffer->taken)
 		tempSize = size;
-	else								// Ako se trazi vise nego sto ima / 100 : 20 -> 20
+	else
 		tempSize = buffer->taken;
 
-	// Ako ima prelamanje buffera
+	/* Ako nema prelamanja podataka kopiraju se podaci od jednom */
 	if ((buffer->buffer_end - buffer->tail) >= tempSize)
 	{
 		memcpy(data, buffer->tail, tempSize);
 		buffer->tail += tempSize;
 	}
+	/* Ako ima prelamanja podataka kopiraju se podaci iz dva puta */
 	else
 	{
 		int temp = buffer->buffer_end - buffer->tail;
@@ -108,6 +119,7 @@ int rPop(Kruzni_Buffer * buffer, char * data, int size)
 		buffer->tail = buffer->buffer_start + (tempSize - temp);
 	}
 
+	/* Promena stanja buffera */
 	buffer->free += tempSize;
 	buffer->taken -= tempSize;
 
@@ -116,22 +128,22 @@ int rPop(Kruzni_Buffer * buffer, char * data, int size)
 
 int rRead(Kruzni_Buffer * buffer, char * data, int size)
 {
-	// Maksimalna velicina podataka koja se uzima
+	/* Velicina podataka koja se cita iz buffera */
 	int tempSize;
-	if (size <= buffer->taken)			// Ako se trazi bar onoliko koliko ima / 100 : 200 -> 100
+	if (size <= buffer->taken)
 		tempSize = size;
-	else								// Ako se trazi vise nego sto ima / 100 : 20 -> 20
+	else
 		tempSize = buffer->taken;
 
-	// Ako ima prelamanje buffera
+	/* Ako nema prelamanja podataka kopiraju se podaci od jednom */
 	if ((buffer->buffer_end - buffer->tail) >= tempSize)
 	{
 		memcpy(data, buffer->tail, tempSize);
 	}
+	/* Ako ima prelamanja podataka kopiraju se podaci iz dva puta */
 	else
 	{
 		int temp = buffer->buffer_end - buffer->tail;
-
 		memcpy(data, buffer->tail, temp);
 		memcpy(data + temp, buffer->buffer_start, tempSize - temp);
 	}
@@ -141,24 +153,26 @@ int rRead(Kruzni_Buffer * buffer, char * data, int size)
 
 int rDelete(Kruzni_Buffer * buffer, int size)
 {
-	// Maksimalna velicina podataka koja se brise
+	/* Velicina podataka koja se brise iz buffera */
 	int tempSize;
-	if (size <= buffer->taken)			// Ako se trazi bar onoliko koliko ima / 100 : 200 -> 100
+	if (size <= buffer->taken)
 		tempSize = size;
-	else								// Ako se trazi vise nego sto ima / 100 : 20 -> 20
+	else
 		tempSize = buffer->taken;
 
-	// Ako ima prelamanje buffera
+	/* Ako nema prelamanja podataka brisu se podaci od jednom */
 	if ((buffer->buffer_end - buffer->tail) >= tempSize)
 	{
 		buffer->tail += tempSize;
 	}
+	/* Ako ima prelamanja podataka brisu se podaci iz dva puta */
 	else
 	{
 		int temp = buffer->buffer_end - buffer->tail;
 		buffer->tail = buffer->buffer_start + (tempSize - temp);
 	}
 
+	/* Promena stanja buffera */
 	buffer->free += tempSize;
 	buffer->taken -= tempSize;
 
