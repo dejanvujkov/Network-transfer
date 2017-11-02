@@ -1,15 +1,20 @@
 #pragma once
+/**
+ * Enumeracije koje se koriste u projektu
+ */
 
+/* Tip poruke koja se salje */
 enum rMessageType
 {
-	REQUEST = 10,
-	ACCEPT = 11,
-	REJECT = 12,
-	DATA = 30,
-	ACK = 31
+	REQUEST = 10,	/* Oznaka koju klijent salje za uspostavljanje veze. */
+	ACCEPT = 11,	/* Oznaka koju server salje ako je prihvatio zahtev. */
+	REJECT = 12,	/* Oznaka koju server salje ako je odbio zahtev. */
+	DATA = 30, 		/* Oznaka da se salje paket podataka */
+	ACK = 31		/* Oznaka da je paket primljen */
 };
 
+/* Stanje konekcije Client-Server */
 enum rConnectionState {
-	CONNECTED,
-	DISCONNECTED
+	CONNECTED,		/* Oznaka da je veza uspostavljena */
+	DISCONNECTED	/* Oznaka da veza nije uspostavljena */
 };

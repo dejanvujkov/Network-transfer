@@ -1,9 +1,8 @@
 #include "Client.h"
 
-// UDP client that uses blocking sockets
 int main(int argc, char* argv[])
 {
-	int buffSize = 300 * 1024 * 1024;
+	int buffSize = 300 * 1024 * 1024; //300MB
 	int* a;
 	int* buffer;
 	buffer = (int*)malloc(buffSize);
