@@ -13,7 +13,6 @@ DWORD WINAPI SendThread(LPVOID param)
 	char* data = tempBuffer + sizeof(rMessageHeader);
 
 	// Za oznacavanje paketa
-	int idPoslednjePoslato = 0;
 
 	int brojPaketa;
 	int velicinaPoruke = MAX_UDP_SIZE - sizeof(rMessageHeader);
@@ -26,14 +25,17 @@ DWORD WINAPI SendThread(LPVOID param)
 	{
 		if (s->sendBuffer->taken > 0 && s->state == CONNECTED && s->canSend)
 		{
-			brojPaketa = (s->cwnd) / (s->sendBuffer->taken);
+			brojPaketa = (s->cwnd) / velicinaPoruke;
 			procitano = 0;
 			printf("\nMOGU DA SALJEM %d PAKETA", brojPaketa + 1);
+			s->canSend = false;
+			s->timedOut = false;
+			s->brojPoslednjePoslatih = brojPaketa + 1;
 
 			for (i = 0; i <= brojPaketa; i++)
 			{
 				header->type = DATA;
-				header->id = ++idPoslednjePoslato;
+				header->id = ++s->idPoslednjePoslato;
 				header->size = (brojPaketa != i && brojPaketa != 0) ? velicinaPoruke : (s->cwnd % velicinaPoruke);
 				
 				trenutnoProcitano = rRead(s->sendBuffer, data, header->size);
@@ -42,11 +44,11 @@ DWORD WINAPI SendThread(LPVOID param)
 				{
 					header->size = s->sendBuffer->taken - procitano;
 					brojPaketa = i;
+					s->brojPoslednjePoslatih = i + 1;
 				}
 				
 				procitano += trenutnoProcitano;
 
-				s->brojPoslednjePoslatih++;
 
 				iResult = sendto(s->socket, tempBuffer, sizeof(rMessageHeader) + header->size, 0, (LPSOCKADDR)(s->adresa), sizeof(sockaddr_in));
 				
@@ -59,12 +61,9 @@ DWORD WINAPI SendThread(LPVOID param)
 				printf("\n SEND: ID:[%d] B:[%d] ", header->id, header->size);
 			}
 
-			printf("\nZAVRSIO SLANJE CEKA ACK");
-
-			s->canSend = false;
 		}
 		else
-			Sleep(1000);
+			Sleep(10);
 	}
 
 	free(tempBuffer);
@@ -102,14 +101,16 @@ DWORD WINAPI RecvThread(LPVOID param)
 			else
 			{
 				printf("\nTIME OUT");
-				if (s->brojPoslednjePrimljenih < s->brojPoslednjePoslatih)
+				//if (s->brojPoslednjePrimljenih < s->brojPoslednjePoslatih)
+				if (ackCount > 0)
 				{
+					s->canSend = false;
+					s->timedOut = true;
 					CountACKs(s, ackBuffer, ackCount);
 					Algoritam(s);
 					s->recv = 0;
 					ackCount = 0;
 					s->canSend = true;
-					s->timedOut = false;
 				}
 				continue;
 			}
@@ -159,8 +160,7 @@ DWORD WINAPI RecvThread(LPVOID param)
 		{
 			if (s->state == DISCONNECTED)
 				continue;
-			//// Ako je podatak prima se ostatak poruke
-			//iResult = recvfrom(s->socket, data, header->size, 0, (LPSOCKADDR)s->adresa, &(s->sockAddrLen));
+
 			if (iResult == SOCKET_ERROR)
 			{
 				printf("DATA DATA recvfrom failed with error: %d\n", WSAGetLastError());
@@ -179,6 +179,8 @@ DWORD WINAPI RecvThread(LPVOID param)
 
 			rPush(s->recvBuffer, data, header->size);
 
+			printf("\nrecieved b: %d ", header->size);
+
 			header->type = ACK;
 
 			iResult = sendto(s->socket, (char*)header, sizeof(rMessageHeader), 0, (LPSOCKADDR)s->adresa, s->sockAddrLen);
@@ -193,29 +195,24 @@ DWORD WINAPI RecvThread(LPVOID param)
 		{
 			if (s->state == DISCONNECTED)
 				continue;
-			//Ako nije timeout obradi ack
-			if (!s->timedOut)
-			{
-				ackCount++;	//mora biti 0 negde
-				memcpy(ackBuffer + ackCount * sizeof(rMessageHeader), header, sizeof(rMessageHeader));
-
-				// Ako je primio sve ocekivano ACK, odradi algoritam i daje dozvolu za slanje
-				if (ackCount == s->brojPoslednjePoslatih)
-				{
-					CountACKs(s, ackBuffer, ackCount);
-					Algoritam(s);
-					ackCount = 0;
-					s->recv = 0;
-					s->canSend = true;
-					s->timedOut = false;
-				}
-				break;
-
-			}
-			else
-			{
+			
+			if (s->timedOut)
 				continue;
-				// ACK zakasnio, ne radi se nista
+
+			ackCount++;
+			memcpy(ackBuffer + ackCount * sizeof(rMessageHeader), header, sizeof(rMessageHeader));
+
+			printf("PRIMIO ACK %d", header->id);
+
+			// Ako je primio sve ocekivano ACK, odradi algoritam i daje dozvolu za slanje
+			if (ackCount == s->brojPoslednjePoslatih)
+			{
+				s->canSend = false;
+				CountACKs(s, ackBuffer, ackCount);
+				Algoritam(s);
+				ackCount = 0;
+				s->recv = 0;
+				s->canSend = true;
 			}
 			break;
 		}
@@ -254,6 +251,8 @@ void CountACKs(rSocket* s, char* ackBuffer, int ackCount)
 			}
 		}
 	}
+
+	s->idPoslednjePoslato = s->idOcekivanog - 1;
 }
 
 int Algoritam(rSocket* h)

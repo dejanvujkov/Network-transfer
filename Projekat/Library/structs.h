@@ -36,7 +36,7 @@ typedef struct rSocket
 
 	//
 	int brojPoslednjePoslatih;
-	int brojPoslednjePrimljenih;
+	int idPoslednjePoslato;
 	int idOcekivanog;
 	bool timedOut;
 	bool canSend;

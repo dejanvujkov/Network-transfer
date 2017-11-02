@@ -2,7 +2,7 @@
 #define MAX_BUFFER_SIZE 10*1024*1024	// 10 MB
 #define MAX_UDP_SIZE 64*1024 - 29		// UDP paket - UDP header
 #define TIMEOUT_SEC 2 * 1000				// Timeout na socketima
-#define INITIAL_CWND 10
+#define INITIAL_CWND 12
 
 
 #include <stdlib.h>

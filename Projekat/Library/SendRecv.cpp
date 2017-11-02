@@ -51,7 +51,7 @@ rSocket* rInitialize()
 	*(s->recvThread) = CreateThread(NULL, 0, &RecvThread, s, 0, NULL);
 	
 	s->brojPoslednjePoslatih = 0;
-	s->brojPoslednjePrimljenih = 0;
+	s->idPoslednjePoslato = 0;
 	s->idOcekivanog = 1;
 	s->timedOut = false;
 	s->canSend = true;
@@ -102,12 +102,11 @@ int rConnect(rSocket* s, char* serverAddress, short port)
 int rAccept(rSocket* s)
 {
 	int iResult;
-
 	rMessageHeader header;
 	header.type = ACCEPT;
 	header.id = 0;
 	header.size = 0;
-	
+
 	iResult = sendto(s->socket, (char*)&header, sizeof(rMessageHeader), 0, (LPSOCKADDR)s->adresa, s->sockAddrLen);
 
 	if (iResult == SOCKET_ERROR)
@@ -118,6 +117,7 @@ int rAccept(rSocket* s)
 	}
 
 	s->state = CONNECTED;
+	
 
 	return 0;
 }
@@ -131,8 +131,6 @@ int rSend(rSocket* s, char* data, int len)
 	{
 		Sleep(100);
 		continue;
-		return -1;
-		//connect here
 	}
 
 	{
@@ -142,9 +140,11 @@ int rSend(rSocket* s, char* data, int len)
 		}
 
 		iResult = rPush(s->sendBuffer, data, len);
+
 		if (iResult != len)
 		{
 			printf("nije pushovano na buffer");
+			return -1;
 		}
 	}
 
@@ -160,7 +160,7 @@ int rRecv(rSocket* s, char* data, int len)
 		Sleep(100);
 	} while (iResult != len);
 
-	printf("SVE SA BUFFERA");
+	printf("SVE SA BUFFERA %d", iResult);
 
 	getchar();
 
