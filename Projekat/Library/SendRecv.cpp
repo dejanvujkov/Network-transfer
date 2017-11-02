@@ -20,9 +20,11 @@ rSocket* rInitialize()
 		SOCK_DGRAM,
 		IPPROTO_UDP);
 
-	s->adresa = (sockaddr_in*)calloc(0, sizeof(sockaddr_in));
+	s->adresa = (sockaddr_in*)calloc(1, sizeof(sockaddr_in));
 	if (s->adresa == NULL)
 		return NULL;
+
+	s->lock = CreateSemaphore(0, 1, 1, NULL);
 
 	s->cwnd = INITIAL_CWND;
 	s->ssthresh = 0;
@@ -46,7 +48,7 @@ rSocket* rInitialize()
 	s->recvThread = s->sendThread + 1;
 	*(s->sendThread) = CreateThread(NULL, 0, &SendThread, s, 0, NULL);
 	*(s->recvThread) = CreateThread(NULL, 0, &RecvThread, s, 0, NULL);
-	
+		
 	s->brojPoslednjePoslatih = 0;
 	s->idPoslednjePoslato = 0;
 	s->idOcekivanog = 1;
@@ -58,23 +60,34 @@ rSocket* rInitialize()
 
 int rDeinitialize(rSocket* s)
 {	
+	WaitForSingleObject(s->lock, INFINITE);
+	s->activeThreads = false;
+	ReleaseSemaphore(s->lock, 1, NULL);
+
+	/* Ceka da recv thread zavrsi timeout */
+	Sleep(TIMEOUT_SEC);
+
 	rFreeBuffer(s->sendBuffer);
 	rFreeBuffer(s->recvBuffer);
 
 	free(s->sendBuffer);
 	free(s->sendThread);
 
+	if (WSACleanup() == SOCKET_ERROR)
+	{
+		printf("closesocket failed with error: %ld\n", WSAGetLastError());
+		return 1;
+	}
+
 	free(s->adresa);
 	free(s);
-
-	// Gasi threadove
-	s->activeThreads = false;
 
 	return 0;
 }
 
 int rConnect(rSocket* s, char* serverAddress, short port)
 {
+	WaitForSingleObject(s->lock, INFINITE);
 	int iResult;
 	//connect
 	(s->adresa)->sin_family = AF_INET;
@@ -97,11 +110,14 @@ int rConnect(rSocket* s, char* serverAddress, short port)
 		return -1;
 	}
 
+	ReleaseSemaphore(s->lock, 1, NULL);
+
 	return 0;
 }
 
 int rAccept(rSocket* s, short port)
 {
+	WaitForSingleObject(s->lock, INFINITE);
 	DWORD timeout = TIMEOUT_SEC;
 
 	s->adresa->sin_family = AF_INET;
@@ -112,17 +128,23 @@ int rAccept(rSocket* s, short port)
 
 	setsockopt(s->socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
 
+	ReleaseSemaphore(s->lock, 1, NULL);
+
 	return 0;
 }
 
 int rSend(rSocket* s, char* data, int len)
 {
+	WaitForSingleObject(s->lock, INFINITE);
+
 	int iResult;
 
 	// Ako nije uspostavljena konekcija, uspostavlja se ovde
 	while (s->state == DISCONNECTED)
 	{
+		ReleaseSemaphore(s->lock, 1, NULL);
 		Sleep(100);
+		WaitForSingleObject(s->lock, INFINITE);
 		continue;
 	}
 
@@ -139,19 +161,30 @@ int rSend(rSocket* s, char* data, int len)
 		return -1;
 	}
 
+	ReleaseSemaphore(s->lock, 1, NULL);
+
 	return 0;
 }
 
 int rRecv(rSocket* s, char* data, int len)
 {
+	WaitForSingleObject(s->lock, INFINITE);
+
 	int iResult;
 
 	do {
 		iResult = rRead(s->recvBuffer, data, len);
+		ReleaseSemaphore(s->lock, 1, NULL);
 		Sleep(100);
+		WaitForSingleObject(s->lock, INFINITE);
 	} while (iResult != len);
 
+	rDelete(s->recvBuffer, len);
+
+	ReleaseSemaphore(s->lock, 1, NULL);
+
 	printf("SVE SA BUFFERA %d", iResult);
+
 
 	return iResult;
 }

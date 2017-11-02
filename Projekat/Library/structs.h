@@ -21,6 +21,8 @@ typedef struct rSocket
 	HANDLE* recvThread;		/* Thread za primanje podataka */
 	bool activeThreads;		/* Flag da li su threadovi aktivni */
 
+	HANDLE lock;			/* Kljuc za socket strukturu */
+
 	rConnectionState state; /* Stanje konekcije sa klijentom/serverom */
 	int sockAddrLen;		/* Duzina adrese */
 	SOCKET socket;			/* UDP Socket */
